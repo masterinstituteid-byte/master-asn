@@ -36,6 +36,8 @@ export function SimulasiRunner({
   const total = soalList.length;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | null>>({});
+  // Waktu selesai (deadline) berdasarkan jam nyata — dibuat sekali saat mulai.
+  const [deadline] = useState(() => Date.now() + TRYOUT_DURASI_DETIK * 1000);
   const [timeLeft, setTimeLeft] = useState(TRYOUT_DURASI_DETIK);
   const [showConfirm, setShowConfirm] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -52,7 +54,8 @@ export function SimulasiRunner({
 
   const handleSubmit = useCallback(async () => {
     setSubmitting(true);
-    const terpakai = TRYOUT_DURASI_DETIK - timeLeft;
+    const sisa = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+    const terpakai = TRYOUT_DURASI_DETIK - sisa;
     const hasil = hitungHasil(soalList, answers, terpakai);
     const tersimpan: HasilTersimpan = { ...hasil, soal: soalList, paketId, paketNama };
     try {
@@ -76,18 +79,28 @@ export function SimulasiRunner({
       /* ignore */
     }
     router.push("/hasil");
-  }, [soalList, answers, timeLeft, router, paketId, paketNama]);
+  }, [soalList, answers, deadline, router, paketId, paketNama]);
 
-  // Countdown
+  // Countdown berbasis jam nyata — tetap akurat meski tab tidak aktif / di-background.
   useEffect(() => {
     if (submitting) return;
-    if (timeLeft <= 0) {
-      handleSubmit();
-      return;
-    }
-    const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
-    return () => clearInterval(id);
-  }, [timeLeft, submitting, handleSubmit]);
+    const tick = () => {
+      const sisa = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+      setTimeLeft(sisa);
+      if (sisa <= 0) handleSubmit();
+    };
+    tick(); // sinkronkan langsung
+    const id = setInterval(tick, 1000);
+    // Saat kembali ke tab, segera koreksi tampilan waktunya.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [submitting, deadline, handleSubmit]);
 
   // Saat pindah soal, tampilkan kembali jawaban yang SUDAH tersimpan (jika ada).
   useEffect(() => {
