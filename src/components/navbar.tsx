@@ -109,8 +109,8 @@ export function Navbar() {
               >
                 Masuk
               </Link>
-              <ButtonLink href="/tryout" size="sm">
-                Mulai Simulasi
+              <ButtonLink href="/login?daftar=1" size="sm">
+                Daftar
                 <IconArrowRight width={16} height={16} />
               </ButtonLink>
             </>
@@ -160,8 +160,8 @@ export function Navbar() {
                 >
                   Masuk
                 </Link>
-                <ButtonLink href="/tryout" size="md" className="mt-2 w-full">
-                  Mulai Simulasi
+                <ButtonLink href="/login?daftar=1" size="md" className="mt-2 w-full">
+                  Daftar
                   <IconArrowRight width={16} height={16} />
                 </ButtonLink>
               </>

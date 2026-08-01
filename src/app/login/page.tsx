@@ -21,6 +21,9 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setNext(safeNext(params.get("next")));
+    if (params.get("daftar") === "1" || params.get("tab") === "daftar") {
+      setMode("daftar");
+    }
     const err = params.get("error");
     if (err === "google_unconfigured") {
       setError(
