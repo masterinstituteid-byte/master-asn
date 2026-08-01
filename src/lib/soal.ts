@@ -52,6 +52,18 @@ export async function getAllSoal(): Promise<Soal[]> {
   return rows.map(toApp);
 }
 
+/**
+ * Soal untuk halaman Bank Soal — HANYA soal mandiri (tidak terikat paket
+ * simulasi). Dengan begitu bank soal & soal simulasi terpisah total.
+ */
+export async function getBankSoal(): Promise<Soal[]> {
+  const rows = await prisma.soal.findMany({
+    where: { aktif: true, paketId: null },
+    orderBy: [{ subtes: "asc" }, { nomor: "asc" }, { createdAt: "asc" }],
+  });
+  return rows.map(toApp);
+}
+
 /** Soal milik satu paket, terurut nomor. */
 export async function getSoalByPaket(paketId: string): Promise<Soal[]> {
   const rows = await prisma.soal.findMany({

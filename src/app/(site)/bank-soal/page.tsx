@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Container, Eyebrow } from "@/components/ui";
+import { Container, Eyebrow, Card, ButtonLink } from "@/components/ui";
 import { BankSoalBrowser } from "@/components/bank-soal-browser";
-import { getAllSoal, seedSoalIfEmpty } from "@/lib/soal";
+import { IconBook, IconArrowRight } from "@/components/icons";
+import { getBankSoal } from "@/lib/soal";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BankSoalPage() {
-  await seedSoalIfEmpty();
-  const soal = await getAllSoal();
+  // Bank soal terpisah dari soal simulasi — hanya soal mandiri (tanpa paket).
+  const soal = await getBankSoal();
 
   return (
     <>
@@ -35,7 +36,26 @@ export default async function BankSoalPage() {
       </section>
 
       <Container wide className="py-14 lg:py-16">
-        <BankSoalBrowser soal={soal} />
+        {soal.length === 0 ? (
+          <Card className="mx-auto flex max-w-lg flex-col items-center gap-4 p-10 text-center">
+            <span className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+              <IconBook width={28} height={28} />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold text-heading">Bank soal segera hadir</h2>
+              <p className="mt-2 text-slate">
+                Soal latihan mandiri sedang kami siapkan dan akan segera ditambahkan.
+                Sementara itu, kamu sudah bisa berlatih penuh lewat Simulasi CAT.
+              </p>
+            </div>
+            <ButtonLink href="/tryout" size="lg">
+              Coba Simulasi
+              <IconArrowRight width={18} height={18} />
+            </ButtonLink>
+          </Card>
+        ) : (
+          <BankSoalBrowser soal={soal} />
+        )}
       </Container>
     </>
   );
