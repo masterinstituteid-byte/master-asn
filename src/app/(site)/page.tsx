@@ -62,7 +62,7 @@ function Hero() {
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-brand-200/40 blur-[120px]" />
       <div className="pointer-events-none absolute right-1/4 top-52 h-80 w-80 rounded-full bg-gold-100/50 blur-[110px]" />
 
-      <Container wide className="relative py-14 lg:py-20">
+      <Container wide className="relative py-10 lg:py-14">
         <div className="mx-auto max-w-3xl text-center animate-rise">
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-[3.6rem] text-balance">
             Siap lulus seleksi{" "}
@@ -121,7 +121,7 @@ function TrustStrip() {
 /* ============================== SUBTES ============================== */
 function SubtesSection() {
   return (
-    <section className="py-14 lg:py-20">
+    <section className="py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           eyebrow="Tiga Subtes SKD"
@@ -212,7 +212,7 @@ function FeatureRows() {
     },
   ];
   return (
-    <section id="fitur" className="py-14 lg:py-20">
+    <section id="fitur" className="py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           align="center"
@@ -329,7 +329,7 @@ function ResultMock() {
 /* ============================== FAQ ============================== */
 function FaqSection() {
   return (
-    <section className="py-14 lg:py-20">
+    <section className="py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           align="center"
@@ -364,7 +364,7 @@ function ExperienceSection() {
     },
   ];
   return (
-    <section className="py-14 lg:py-20">
+    <section className="py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           align="center"
@@ -412,7 +412,7 @@ function TestimonialSection({ items }: { items: TestimoniRingkas[] }) {
       : [data];
 
   return (
-    <section className="overflow-hidden py-14 lg:py-20">
+    <section className="overflow-hidden py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           align="center"
@@ -499,7 +499,7 @@ function TestiCard({
 function PricingSection({ paket }: { paket: PaketRingkas[] }) {
   const kosong = paket.length === 0;
   return (
-    <section className="border-t border-line bg-surface py-14 lg:py-20">
+    <section className="border-t border-line bg-surface py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           align="center"
@@ -587,9 +587,9 @@ function PricingSection({ paket }: { paket: PaketRingkas[] }) {
 /* ============================== FINAL CTA ============================== */
 function FinalCTA() {
   return (
-    <section className="py-14 lg:py-20">
+    <section className="py-10 lg:py-14">
       <Container wide>
-        <div className="relative overflow-hidden rounded-3xl bg-navy px-8 py-16 text-center sm:px-16 lg:py-20">
+        <div className="relative overflow-hidden rounded-3xl bg-navy px-8 py-12 text-center sm:px-16 lg:py-16">
           <div className="pointer-events-none absolute inset-0 bg-dots opacity-[0.15]" />
           <div className="pointer-events-none absolute -left-20 -top-20 h-72 w-72 rounded-full bg-brand-600/30 blur-[90px]" />
           <div className="pointer-events-none absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-gold-500/20 blur-[90px]" />
