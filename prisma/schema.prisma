@@ -1,0 +1,128 @@
+// Skema database MASTER ASN
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String       @id @default(cuid())
+  nama         String
+  email        String       @unique
+  passwordHash String
+  provider     String       @default("password")
+  createdAt    DateTime     @default(now())
+  hasil        HasilUjian[]
+  transaksi    Transaksi[]
+  akses        AksesPaket[]
+}
+
+model HasilUjian {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paketId            String?
+  paketNama          String
+  nilaiTotal         Int
+  nilaiMaksTotal     Int
+  lulusSemua         Boolean
+  rincian            String // JSON: array HasilSubtes (nilai per subtes)
+  jumlahSoal         Int
+  waktuTerpakaiDetik Int
+  createdAt          DateTime @default(now())
+}
+
+model Paket {
+  id            String       @id @default(cuid())
+  nama          String
+  deskripsi     String       @default("")
+  harga         Int          @default(0) // rupiah; 0 = gratis
+  aktif         Boolean      @default(true)
+  tampilLanding Boolean      @default(true) // tampil di daftar harga landing
+  populer       Boolean      @default(false) // badge "Paling populer"
+  urutan        Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  soal          Soal[]
+  transaksi     Transaksi[]
+  akses         AksesPaket[]
+}
+
+model Testimoni {
+  id        String   @id @default(cuid())
+  nama      String
+  peran     String   @default("") // mis. "Peserta SKD 2025"
+  pesan     String
+  rating    Int      @default(5) // 1-5
+  aktif     Boolean  @default(true)
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Modul {
+  id        String   @id @default(cuid())
+  judul     String
+  deskripsi String   @default("")
+  kategori  String   @default("Umum") // TWK/TIU/TKP/Umum
+  namaFile  String // nama file asli saat diunggah
+  ukuran    Int      @default(0) // byte
+  aktif     Boolean  @default(true)
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaksi {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paketId     String?
+  paket       Paket?    @relation(fields: [paketId], references: [id], onDelete: SetNull)
+  paketNama   String
+  jumlah      Int
+  status      String    @default("pending") // pending | lunas | ditolak
+  catatan     String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  confirmedAt DateTime?
+}
+
+model AksesPaket {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paketId   String
+  paket     Paket    @relation(fields: [paketId], references: [id], onDelete: Cascade)
+  sumber    String   @default("pembayaran") // pembayaran | admin | gratis
+  createdAt DateTime @default(now())
+
+  @@unique([userId, paketId])
+}
+
+model Setting {
+  key   String @id
+  value String @default("")
+}
+
+model Soal {
+  id         String   @id @default(cuid())
+  nomor      Int      @default(0)
+  subtes     String
+  materi     String
+  pertanyaan String
+  opsi       String
+  kunci      String?
+  pembahasan String
+  tingkat    String
+  aktif      Boolean  @default(true)
+  paketId    String?
+  paket      Paket?   @relation(fields: [paketId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
