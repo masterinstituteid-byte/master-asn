@@ -28,6 +28,7 @@ import { formatRupiah } from "@/lib/format";
 import { getTestimoniAktif, type TestimoniRingkas } from "@/lib/testimoni";
 import { getPaketLanding, type PaketRingkas } from "@/lib/paket";
 import Link from "next/link";
+import type { CSSProperties, HTMLAttributes } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -404,13 +405,19 @@ const TESTIMONI_CONTOH: TestimoniRingkas[] = [
 function TestimonialSection({ items }: { items: TestimoniRingkas[] }) {
   const pakaiContoh = items.length === 0;
   const data = pakaiContoh ? TESTIMONI_CONTOH : items;
+  // Bagi jadi 2 baris berselang-seling bila cukup banyak, agar dinding terasa penuh.
+  const rows =
+    data.length >= 6
+      ? [data.filter((_, i) => i % 2 === 0), data.filter((_, i) => i % 2 === 1)]
+      : [data];
+
   return (
-    <section className="py-14 lg:py-20">
+    <section className="overflow-hidden py-14 lg:py-20">
       <Container wide>
         <SectionHeading
           align="center"
           eyebrow="Kata Mereka"
-          title="Bayangkan tenangnya saat hari-H tiba"
+          title="Dipercaya para pejuang SKD"
           desc={
             pakaiContoh
               ? "Cuplikan di bawah hanya contoh ilustrasi — akan otomatis berganti begitu kamu menambah testimoni di panel admin."
@@ -422,34 +429,69 @@ function TestimonialSection({ items }: { items: TestimoniRingkas[] }) {
             <Badge tone="neutral">Contoh ilustrasi</Badge>
           </div>
         )}
-        <div className="mx-auto mt-10 grid max-w-5xl gap-6 md:grid-cols-3">
-          {data.map((t) => (
-            <Card key={t.id} className="flex flex-col p-7">
-              <div className="flex items-center justify-between">
-                <IconQuote width={30} height={30} className="text-brand-200" />
-                <span className="flex items-center gap-0.5 text-gold-500">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <IconStar key={i} width={14} height={14} />
-                  ))}
-                </span>
-              </div>
-              <p className="mt-4 flex-1 text-[0.95rem] leading-relaxed text-heading">
-                “{t.pesan}”
-              </p>
-              <div className="mt-6 flex items-center gap-3 border-t border-line pt-5">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-navy text-sm font-bold text-white">
-                  {t.nama.charAt(0)}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-heading">{t.nama}</p>
-                  {t.peran && <p className="text-xs text-slate-400">{t.peran}</p>}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
       </Container>
+
+      <div className="mt-12 flex flex-col gap-6">
+        {rows.map((row, i) => (
+          <MarqueeRow key={i} items={row} reverse={i % 2 === 1} />
+        ))}
+      </div>
     </section>
+  );
+}
+
+function MarqueeRow({ items, reverse }: { items: TestimoniRingkas[]; reverse?: boolean }) {
+  if (items.length === 0) return null;
+  // Penuhi lebar minimal agar loop mulus, lalu gandakan (dua paruh identik).
+  let base = items;
+  while (base.length < 6) base = [...base, ...items];
+  const seq = [...base, ...base];
+  const durasi = Math.max(24, base.length * 5); // detik; makin banyak kartu makin lama (kecepatan tetap)
+
+  return (
+    <div className="marquee">
+      <div
+        className={`marquee-track${reverse ? " reverse" : ""}`}
+        style={{ "--marquee-duration": `${durasi}s` } as CSSProperties}
+      >
+        {seq.map((t, i) => (
+          <TestiCard key={i} t={t} aria-hidden={i >= base.length} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TestiCard({
+  t,
+  ...rest
+}: { t: TestimoniRingkas } & HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      {...rest}
+      className="mr-6 flex h-52 w-[19rem] shrink-0 flex-col rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-card)] sm:w-[22rem]"
+    >
+      <div className="flex items-center justify-between">
+        <IconQuote width={26} height={26} className="text-brand-200" />
+        <span className="flex items-center gap-0.5 text-gold-500">
+          {Array.from({ length: t.rating }).map((_, i) => (
+            <IconStar key={i} width={13} height={13} />
+          ))}
+        </span>
+      </div>
+      <p className="mt-3 line-clamp-3 text-[0.9rem] leading-relaxed text-heading">
+        “{t.pesan}”
+      </p>
+      <div className="mt-auto flex items-center gap-3 border-t border-line pt-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-navy text-sm font-bold text-white">
+          {t.nama.charAt(0)}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-heading">{t.nama}</p>
+          {t.peran && <p className="truncate text-xs text-slate-400">{t.peran}</p>}
+        </div>
+      </div>
+    </div>
   );
 }
 
