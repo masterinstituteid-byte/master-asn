@@ -37,6 +37,7 @@ import type { ModulRingkas } from "@/lib/modul";
 import type { TransaksiRingkas, StatusTransaksi } from "@/lib/transaksi";
 import type { InfoPembayaran } from "@/lib/pengaturan";
 import type { TestimoniRingkas, TestimoniInput } from "@/lib/testimoni";
+import type { PaketHargaRingkas, PaketHargaInput } from "@/lib/paket-harga";
 import { formatRupiah } from "@/lib/format";
 import {
   createSoalAction,
@@ -55,13 +56,23 @@ import {
   createTestimoniAction,
   updateTestimoniAction,
   deleteTestimoniAction,
+  createPaketHargaAction,
+  updatePaketHargaAction,
+  deletePaketHargaAction,
 } from "@/app/admin/actions";
 
 const HURUF = ["A", "B", "C", "D", "E"];
 
 type View = "paket" | "detail" | "form";
 
-type Section = "bank" | "modul" | "transaksi" | "testimoni" | "pengguna" | "hasil";
+type Section =
+  | "bank"
+  | "paketHarga"
+  | "modul"
+  | "transaksi"
+  | "testimoni"
+  | "pengguna"
+  | "hasil";
 
 export function AdminPanel({
   paket,
@@ -72,6 +83,7 @@ export function AdminPanel({
   transaksi,
   infoBayar,
   testimoni,
+  paketHarga,
   adminEmail,
 }: {
   paket: PaketRingkas[];
@@ -82,6 +94,7 @@ export function AdminPanel({
   transaksi: TransaksiRingkas[];
   infoBayar: InfoPembayaran;
   testimoni: TestimoniRingkas[];
+  paketHarga: PaketHargaRingkas[];
   adminEmail: string;
 }) {
   const router = useRouter();
@@ -120,6 +133,7 @@ export function AdminPanel({
         <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-5 sm:px-8">
           {([
             ["bank", "Soal & Paket", null],
+            ["paketHarga", "Paket Harga", paketHarga.length],
             ["modul", "Modul", modul.length],
             ["transaksi", "Transaksi", pendingTx > 0 ? pendingTx : null],
             ["testimoni", "Testimoni", testimoni.length],
@@ -151,6 +165,8 @@ export function AdminPanel({
       </div>
 
       <main className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
+        {section === "paketHarga" && <PaketHargaSection paketHarga={paketHarga} />}
+
         {section === "modul" && <ModulSection modul={modul} />}
 
         {section === "transaksi" && (
@@ -200,9 +216,9 @@ export function AdminPanel({
                 router.refresh();
               })
             }
-            onRename={(nama, deskripsi, harga, tampilLanding, populer) =>
+            onRename={(nama, deskripsi, harga) =>
               startTransition(async () => {
-                await updatePaketAction(activePaket.id, { nama, deskripsi, harga, tampilLanding, populer });
+                await updatePaketAction(activePaket.id, { nama, deskripsi, harga });
                 router.refresh();
               })
             }
@@ -374,13 +390,7 @@ function PaketDetail({
   onEditSoal: (id: string) => void;
   onDeleteSoal: (id: string) => void;
   onDeletePaket: () => void;
-  onRename: (
-    nama: string,
-    deskripsi: string,
-    harga: number,
-    tampilLanding: boolean,
-    populer: boolean,
-  ) => void;
+  onRename: (nama: string, deskripsi: string, harga: number) => void;
   onImported: () => void;
 }) {
   const [filter, setFilter] = useState<"ALL" | Subtes>("ALL");
@@ -389,8 +399,6 @@ function PaketDetail({
   const [nama, setNama] = useState(paket.nama);
   const [deskripsi, setDeskripsi] = useState(paket.deskripsi);
   const [harga, setHarga] = useState(String(paket.harga));
-  const [tampilLanding, setTampilLanding] = useState(paket.tampilLanding);
-  const [populer, setPopuler] = useState(paket.populer);
 
   const list = soal.filter((s) => filter === "ALL" || s.subtes === filter);
 
@@ -428,31 +436,11 @@ function PaketDetail({
                 className={inputCls}
               />
             </label>
-            <div className="flex flex-wrap gap-4 pt-1">
-              <label className="flex items-center gap-2 text-sm text-heading">
-                <input
-                  type="checkbox"
-                  checked={tampilLanding}
-                  onChange={(e) => setTampilLanding(e.target.checked)}
-                  className="h-4 w-4 accent-[var(--color-brand-600)]"
-                />
-                Tampilkan di landing page
-              </label>
-              <label className="flex items-center gap-2 text-sm text-heading">
-                <input
-                  type="checkbox"
-                  checked={populer}
-                  onChange={(e) => setPopuler(e.target.checked)}
-                  className="h-4 w-4 accent-[var(--color-brand-600)]"
-                />
-                Tandai “Paling populer”
-              </label>
-            </div>
             <div className="flex gap-2">
               <Button
                 size="sm"
                 onClick={() => {
-                  onRename(nama, deskripsi, Math.max(0, Number(harga) || 0), tampilLanding, populer);
+                  onRename(nama, deskripsi, Math.max(0, Number(harga) || 0));
                   setEditHead(false);
                 }}
               >
@@ -465,8 +453,6 @@ function PaketDetail({
                   setNama(paket.nama);
                   setDeskripsi(paket.deskripsi);
                   setHarga(String(paket.harga));
-                  setTampilLanding(paket.tampilLanding);
-                  setPopuler(paket.populer);
                   setEditHead(false);
                 }}
               >
@@ -485,8 +471,6 @@ function PaketDetail({
               >
                 {formatRupiah(paket.harga)}
               </span>
-              {paket.tampilLanding && <Badge tone="navy">Di landing</Badge>}
-              {paket.populer && <Badge tone="gold">Populer</Badge>}
               <button onClick={() => setEditHead(true)} className="text-sm font-medium text-brand-600 hover:underline">
                 ubah
               </button>
@@ -1671,6 +1655,191 @@ function TestimoniSection({ testimoni }: { testimoni: TestimoniRingkas[] }) {
             <div className="flex shrink-0 gap-2">
               <button onClick={() => mulaiEdit(t)} className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-slate hover:bg-muted hover:text-heading">Edit</button>
               <button onClick={() => { if (confirm("Hapus testimoni ini?")) hapus(t.id); }} disabled={pending} className="rounded-lg border border-danger-100 bg-danger-50 px-3 py-1.5 text-sm font-medium text-danger hover:brightness-95">Hapus</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ===================== Paket Harga (paket jual) ===================== */
+function emptyPaketHarga(): PaketHargaInput {
+  return {
+    nama: "",
+    harga: 0,
+    deskripsi: "",
+    jumlahPaketSoal: 1,
+    fasilitas: ["Pembahasan lengkap tiap soal", "Penilaian passing grade otomatis"],
+    populer: false,
+    aktif: true,
+  };
+}
+
+function PaketHargaSection({ paketHarga }: { paketHarga: PaketHargaRingkas[] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [editId, setEditId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<PaketHargaInput>(emptyPaketHarga());
+  const [error, setError] = useState<string | null>(null);
+
+  const set = (patch: Partial<PaketHargaInput>) => setForm({ ...form, ...patch });
+  const setFasil = (i: number, v: string) => {
+    const arr = [...form.fasilitas];
+    arr[i] = v;
+    set({ fasilitas: arr });
+  };
+  const addFasil = () => set({ fasilitas: [...form.fasilitas, ""] });
+  const rmFasil = (i: number) => set({ fasilitas: form.fasilitas.filter((_, j) => j !== i) });
+
+  const mulaiTambah = () => {
+    setForm(emptyPaketHarga());
+    setEditId(null);
+    setError(null);
+    setOpen(true);
+  };
+  const mulaiEdit = (p: PaketHargaRingkas) => {
+    setForm({
+      nama: p.nama,
+      harga: p.harga,
+      deskripsi: p.deskripsi,
+      jumlahPaketSoal: p.jumlahPaketSoal,
+      fasilitas: p.fasilitas.length ? p.fasilitas : [""],
+      populer: p.populer,
+      aktif: p.aktif,
+    });
+    setEditId(p.id);
+    setError(null);
+    setOpen(true);
+  };
+
+  const simpan = () => {
+    if (!form.nama.trim()) {
+      setError("Nama paket wajib diisi.");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      if (editId) await updatePaketHargaAction(editId, form);
+      else await createPaketHargaAction(form);
+      setOpen(false);
+      setEditId(null);
+      router.refresh();
+    });
+  };
+
+  const hapus = (id: string) =>
+    startTransition(async () => {
+      await deletePaketHargaAction(id);
+      router.refresh();
+    });
+
+  return (
+    <>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-heading">Paket Harga (yang dijual)</h1>
+          <p className="mt-1 text-slate">
+            Atur paket berbayar yang tampil di <span className="font-semibold text-heading">landing page</span> —
+            nama, harga, jumlah paket soal, dan daftar fasilitas berbeda tiap paket. Total{" "}
+            <span className="font-semibold text-heading">{paketHarga.length}</span> paket.
+          </p>
+        </div>
+        {!open && <Button onClick={mulaiTambah}>+ Tambah Paket Harga</Button>}
+      </div>
+
+      {open && (
+        <div className="mt-6 space-y-4 rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nama paket">
+              <input value={form.nama} onChange={(e) => set({ nama: e.target.value })} placeholder="mis. Paket Premium" className={inputCls} />
+            </Field>
+            <Field label="Harga (Rupiah) — 0 = gratis">
+              <input type="number" min={0} step={1000} value={form.harga} onChange={(e) => set({ harga: Number(e.target.value) })} className={inputCls} />
+            </Field>
+            <Field label="Jumlah paket soal">
+              <input type="number" min={0} value={form.jumlahPaketSoal} onChange={(e) => set({ jumlahPaketSoal: Number(e.target.value) })} className={inputCls} />
+            </Field>
+            <Field label="Deskripsi singkat (opsional)">
+              <input value={form.deskripsi} onChange={(e) => set({ deskripsi: e.target.value })} placeholder="mis. Untuk persiapan serius" className={inputCls} />
+            </Field>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-semibold text-heading">Fasilitas paket</p>
+            <div className="space-y-2">
+              {form.fasilitas.map((f, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600">
+                    <IconCheck width={12} height={12} />
+                  </span>
+                  <input value={f} onChange={(e) => setFasil(i, e.target.value)} placeholder="mis. Analitik nilai per materi" className={inputCls} />
+                  <button
+                    onClick={() => rmFasil(i)}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-line text-slate hover:bg-danger-50 hover:text-danger"
+                    aria-label="Hapus fasilitas"
+                  >
+                    <IconClose width={15} height={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button onClick={addFasil} className="mt-2 text-sm font-semibold text-brand-600 hover:underline">
+              + Tambah fasilitas
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6">
+            <label className="flex items-center gap-2 text-sm text-heading">
+              <input type="checkbox" checked={form.populer} onChange={(e) => set({ populer: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand-600)]" />
+              Tandai “Paling populer”
+            </label>
+            <label className="flex items-center gap-2 text-sm text-heading">
+              <input type="checkbox" checked={form.aktif} onChange={(e) => set({ aktif: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand-600)]" />
+              Tampilkan di landing
+            </label>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-danger-100 bg-danger-50 p-3 text-sm text-danger">
+              <IconWarning width={16} height={16} className="mt-0.5 shrink-0" /> {error}
+            </div>
+          )}
+          <div className="flex justify-end gap-3 border-t border-line pt-4">
+            <Button variant="outline" onClick={() => { setOpen(false); setEditId(null); }} disabled={pending}>Batal</Button>
+            <Button onClick={simpan} disabled={pending}>
+              {pending ? "Menyimpan…" : editId ? "Simpan Perubahan" : "Tambah Paket"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {paketHarga.length === 0 && !open && (
+          <div className="sm:col-span-2 lg:col-span-3 rounded-2xl border border-dashed border-line-strong bg-surface p-8 text-center">
+            <p className="text-sm text-slate">
+              Belum ada paket harga. Tambah paket pertama — akan tampil di bagian Harga landing page.
+            </p>
+          </div>
+        )}
+        {paketHarga.map((p) => (
+          <div key={p.id} className="flex flex-col rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-bold text-heading">{p.nama}</p>
+                <p className="tnum text-lg font-extrabold text-brand-600">{formatRupiah(p.harga)}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                {p.populer && <Badge tone="gold">Populer</Badge>}
+                {!p.aktif && <Badge tone="neutral">Nonaktif</Badge>}
+              </div>
+            </div>
+            <p className="tnum mt-1 text-xs text-slate">{p.jumlahPaketSoal} paket soal · {p.fasilitas.length} fasilitas</p>
+            {p.deskripsi && <p className="mt-1 line-clamp-2 text-sm text-slate">{p.deskripsi}</p>}
+            <div className="mt-4 flex gap-2 border-t border-line pt-4">
+              <button onClick={() => mulaiEdit(p)} className="flex-1 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-slate hover:bg-muted hover:text-heading">Edit</button>
+              <button onClick={() => { if (confirm("Hapus paket harga ini?")) hapus(p.id); }} disabled={pending} className="rounded-lg border border-danger-100 bg-danger-50 px-3 py-1.5 text-sm font-medium text-danger hover:brightness-95">Hapus</button>
             </div>
           </div>
         ))}

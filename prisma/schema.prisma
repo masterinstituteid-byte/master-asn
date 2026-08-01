@@ -110,6 +110,20 @@ model Setting {
   value String @default("")
 }
 
+model PaketHarga {
+  id              String   @id @default(cuid())
+  nama            String
+  harga           Int      @default(0) // rupiah; 0 = gratis
+  deskripsi       String   @default("")
+  jumlahPaketSoal Int      @default(0) // berapa paket soal yang didapat
+  fasilitas       String   @default("[]") // JSON array of string (daftar fasilitas)
+  populer         Boolean  @default(false)
+  aktif           Boolean  @default(true)
+  urutan          Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model Soal {
   id         String   @id @default(cuid())
   nomor      Int      @default(0)

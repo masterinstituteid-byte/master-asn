@@ -10,6 +10,7 @@ import { getAllModul } from "@/lib/modul";
 import { getAllTransaksi } from "@/lib/transaksi";
 import { getInfoPembayaran } from "@/lib/pengaturan";
 import { getAllTestimoni } from "@/lib/testimoni";
+import { getAllPaketHarga } from "@/lib/paket-harga";
 import { AdminPanel } from "@/components/admin-panel";
 
 export const metadata: Metadata = { title: "Panel Admin" };
@@ -21,7 +22,7 @@ export default async function AdminPage() {
   if (!isAdminEmail(session.email)) redirect("/dashboard");
 
   await seedSoalIfEmpty();
-  const [paket, soal, users, hasil, modul, transaksi, infoBayar, testimoni] =
+  const [paket, soal, users, hasil, modul, transaksi, infoBayar, testimoni, paketHarga] =
     await Promise.all([
       getAllPaket(),
       getAllSoal(),
@@ -31,6 +32,7 @@ export default async function AdminPage() {
       getAllTransaksi(),
       getInfoPembayaran(),
       getAllTestimoni(),
+      getAllPaketHarga(),
     ]);
 
   return (
@@ -43,6 +45,7 @@ export default async function AdminPage() {
       transaksi={transaksi}
       infoBayar={infoBayar}
       testimoni={testimoni}
+      paketHarga={paketHarga}
       adminEmail={session.email}
     />
   );

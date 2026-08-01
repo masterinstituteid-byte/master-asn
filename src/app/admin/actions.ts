@@ -26,6 +26,12 @@ import {
   deleteTestimoni,
   type TestimoniInput,
 } from "@/lib/testimoni";
+import {
+  createPaketHarga,
+  updatePaketHarga,
+  deletePaketHarga,
+  type PaketHargaInput,
+} from "@/lib/paket-harga";
 
 async function assertAdmin() {
   const s = await currentSession();
@@ -185,5 +191,24 @@ export async function updateTestimoniAction(id: string, input: TestimoniInput) {
 export async function deleteTestimoniAction(id: string) {
   await assertAdmin();
   await deleteTestimoni(id);
+  revalidate();
+}
+
+// ---- Paket Harga (paket jual) ----
+export async function createPaketHargaAction(input: PaketHargaInput) {
+  await assertAdmin();
+  await createPaketHarga(input);
+  revalidate();
+}
+
+export async function updatePaketHargaAction(id: string, input: PaketHargaInput) {
+  await assertAdmin();
+  await updatePaketHarga(id, input);
+  revalidate();
+}
+
+export async function deletePaketHargaAction(id: string) {
+  await assertAdmin();
+  await deletePaketHarga(id);
   revalidate();
 }

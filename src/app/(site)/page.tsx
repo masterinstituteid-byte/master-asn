@@ -26,16 +26,16 @@ import { RotatingWord } from "@/components/rotating-word";
 import { Faq } from "@/components/faq";
 import { formatRupiah } from "@/lib/format";
 import { getTestimoniAktif, type TestimoniRingkas } from "@/lib/testimoni";
-import { getPaketLanding, type PaketRingkas } from "@/lib/paket";
+import { getPaketHargaAktif, type PaketHargaRingkas } from "@/lib/paket-harga";
 import Link from "next/link";
 import type { CSSProperties, HTMLAttributes } from "react";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [testimoni, paketLanding] = await Promise.all([
+  const [testimoni, plans] = await Promise.all([
     getTestimoniAktif(),
-    getPaketLanding(),
+    getPaketHargaAktif(),
   ]);
 
   return (
@@ -46,7 +46,7 @@ export default async function HomePage() {
       <FeatureRows />
       <ExperienceSection />
       <TestimonialSection items={testimoni} />
-      <PricingSection paket={paketLanding} />
+      <PricingSection plans={plans} />
       <FaqSection />
       <FinalCTA />
     </>
@@ -496,8 +496,15 @@ function TestiCard({
 }
 
 /* ============================== PRICING ============================== */
-function PricingSection({ paket }: { paket: PaketRingkas[] }) {
-  const kosong = paket.length === 0;
+const PLAN_CONTOH: PaketHargaRingkas[] = [
+  { id: "c1", nama: "Paket Hemat", harga: 0, deskripsi: "Untuk mulai mengenal pola soal SKD.", jumlahPaketSoal: 1, fasilitas: ["1 paket simulasi CAT", "Penilaian passing grade", "Pembahasan soal terbatas"], populer: false, aktif: true, urutan: 0 },
+  { id: "c2", nama: "Paket Pro", harga: 79000, deskripsi: "Untuk persiapan serius menuju hari-H.", jumlahPaketSoal: 10, fasilitas: ["10 paket simulasi CAT", "Seluruh modul & pembahasan", "Analitik nilai per materi", "Peringkat & riwayat"], populer: true, aktif: true, urutan: 1 },
+  { id: "c3", nama: "Paket Bootcamp", harga: 349000, deskripsi: "Persiapan intensif paling lengkap.", jumlahPaketSoal: 30, fasilitas: ["Semua fitur Pro", "30 paket simulasi", "Prioritas soal terbaru"], populer: false, aktif: true, urutan: 2 },
+];
+
+function PricingSection({ plans }: { plans: PaketHargaRingkas[] }) {
+  const pakaiContoh = plans.length === 0;
+  const data = pakaiContoh ? PLAN_CONTOH : plans;
   return (
     <section className="border-t border-line bg-surface py-10 lg:py-14">
       <Container wide>
@@ -505,68 +512,59 @@ function PricingSection({ paket }: { paket: PaketRingkas[] }) {
           align="center"
           eyebrow="Harga"
           title="Pilih paket, mulai berlatih"
-          desc={
-            kosong
-              ? "Paket akan tampil di sini begitu kamu menambahkannya di panel admin."
-              : "Setiap paket berisi soal setara CAT BKN, lengkap dengan pembahasan dan analitik nilai."
-          }
+          desc="Pilih paket sesuai kebutuhanmu — makin lengkap, makin siap menghadapi hari-H."
         />
-
-        {kosong ? (
-          <div className="mx-auto mt-10 max-w-md">
-            <Card className="p-8 text-center">
-              <p className="text-slate">Belum ada paket yang ditampilkan.</p>
-              <ButtonLink href="/tryout" size="md" className="mt-5">
-                Lihat Simulasi
-              </ButtonLink>
-            </Card>
+        {pakaiContoh && (
+          <div className="mt-5 flex justify-center">
+            <Badge tone="gold">Contoh — atur paket aslimu di panel admin</Badge>
           </div>
-        ) : (
-          <div className="mx-auto mt-10 grid max-w-5xl items-start gap-6 lg:grid-cols-3">
-            {paket.map((p) => {
-              const gratis = p.harga <= 0;
-              const features = [
-                `${p.total} soal · TWK ${p.jumlah.TWK} · TIU ${p.jumlah.TIU} · TKP ${p.jumlah.TKP}`,
-                "Pembahasan lengkap tiap soal",
-                "Penilaian passing grade otomatis",
-                "Peringkat & analitik di dashboard",
-              ];
-              return (
-                <div
-                  key={p.id}
-                  className={`relative flex flex-col rounded-3xl border p-7 ${
-                    p.populer
-                      ? "border-brand-600 bg-surface shadow-[var(--shadow-lift)] lg:-mt-4 lg:mb-4"
-                      : "border-line bg-surface shadow-[var(--shadow-card)]"
-                  }`}
+        )}
+
+        <div className="mx-auto mt-10 grid max-w-5xl items-start gap-6 lg:grid-cols-3">
+          {data.map((p) => {
+            const gratis = p.harga <= 0;
+            return (
+              <div
+                key={p.id}
+                className={`relative flex flex-col rounded-3xl border p-7 ${
+                  p.populer
+                    ? "border-brand-600 bg-surface shadow-[var(--shadow-lift)] lg:-mt-4 lg:mb-4"
+                    : "border-line bg-surface shadow-[var(--shadow-card)]"
+                }`}
+              >
+                {p.populer && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge tone="gold">
+                      <IconStar width={12} height={12} />
+                      Paling populer
+                    </Badge>
+                  </span>
+                )}
+                <h3 className="text-lg font-bold text-heading">{p.nama}</h3>
+                {p.deskripsi && <p className="mt-1 text-sm text-slate">{p.deskripsi}</p>}
+                <div className="mt-5 flex items-end gap-1.5">
+                  <span className="text-4xl font-extrabold tracking-tight text-heading">
+                    {formatRupiah(p.harga)}
+                  </span>
+                  {!gratis && <span className="mb-1 text-sm text-slate-400">/ paket</span>}
+                </div>
+                {p.jumlahPaketSoal > 0 && (
+                  <p className="tnum mt-2 text-sm font-semibold text-brand-700">
+                    Berisi {p.jumlahPaketSoal} paket soal
+                  </p>
+                )}
+                <ButtonLink
+                  href="/login?daftar=1"
+                  variant={p.populer ? "primary" : "outline"}
+                  size="md"
+                  className="mt-5 w-full"
                 >
-                  {p.populer && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge tone="gold">
-                        <IconStar width={12} height={12} />
-                        Paling populer
-                      </Badge>
-                    </span>
-                  )}
-                  <h3 className="text-lg font-bold text-heading">{p.nama}</h3>
-                  {p.deskripsi && <p className="mt-1 text-sm text-slate">{p.deskripsi}</p>}
-                  <div className="mt-5 flex items-end gap-1.5">
-                    <span className="text-4xl font-extrabold tracking-tight text-heading">
-                      {formatRupiah(p.harga)}
-                    </span>
-                    {!gratis && <span className="mb-1 text-sm text-slate-400">/ paket</span>}
-                  </div>
-                  <ButtonLink
-                    href="/tryout"
-                    variant={p.populer ? "primary" : "outline"}
-                    size="md"
-                    className="mt-6 w-full"
-                  >
-                    {gratis ? "Mulai Gratis" : "Beli Paket"}
-                  </ButtonLink>
+                  {gratis ? "Mulai Gratis" : "Pilih Paket"}
+                </ButtonLink>
+                {p.fasilitas.length > 0 && (
                   <ul className="mt-7 space-y-3 border-t border-line pt-6">
-                    {features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-sm text-slate">
+                    {p.fasilitas.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-slate">
                         <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600">
                           <IconCheck width={12} height={12} />
                         </span>
@@ -574,11 +572,11 @@ function PricingSection({ paket }: { paket: PaketRingkas[] }) {
                       </li>
                     ))}
                   </ul>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                )}
+              </div>
+            );
+          })}
+        </div>
       </Container>
     </section>
   );
