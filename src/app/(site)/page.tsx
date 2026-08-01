@@ -496,32 +496,32 @@ function TestiCard({
 }
 
 /* ============================== PRICING ============================== */
-const PLAN_CONTOH: PaketHargaRingkas[] = [
-  { id: "c1", nama: "Paket Hemat", harga: 0, deskripsi: "Untuk mulai mengenal pola soal SKD.", jumlahPaketSoal: 1, fasilitas: ["1 paket simulasi CAT", "Penilaian passing grade", "Pembahasan soal terbatas"], populer: false, aktif: true, urutan: 0 },
-  { id: "c2", nama: "Paket Pro", harga: 79000, deskripsi: "Untuk persiapan serius menuju hari-H.", jumlahPaketSoal: 10, fasilitas: ["10 paket simulasi CAT", "Seluruh modul & pembahasan", "Analitik nilai per materi", "Peringkat & riwayat"], populer: true, aktif: true, urutan: 1 },
-  { id: "c3", nama: "Paket Bootcamp", harga: 349000, deskripsi: "Persiapan intensif paling lengkap.", jumlahPaketSoal: 30, fasilitas: ["Semua fitur Pro", "30 paket simulasi", "Prioritas soal terbaru"], populer: false, aktif: true, urutan: 2 },
-];
-
 function PricingSection({ plans }: { plans: PaketHargaRingkas[] }) {
-  const pakaiContoh = plans.length === 0;
-  const data = pakaiContoh ? PLAN_CONTOH : plans;
+  const kosong = plans.length === 0;
   return (
     <section className="border-t border-line bg-surface py-10 lg:py-14">
       <Container wide>
         <SectionHeading
           align="center"
           eyebrow="Harga"
-          title="Pilih paket, mulai berlatih"
-          desc="Pilih paket sesuai kebutuhanmu — makin lengkap, makin siap menghadapi hari-H."
+          title={kosong ? "Paket belajar segera hadir" : "Pilih paket, mulai berlatih"}
+          desc={
+            kosong
+              ? "Kami sedang menyiapkan paket & soal terbaik untukmu. Sementara itu, kamu sudah bisa mencoba simulasi gratisnya."
+              : "Pilih paket sesuai kebutuhanmu — makin lengkap, makin siap menghadapi hari-H."
+          }
         />
-        {pakaiContoh && (
-          <div className="mt-5 flex justify-center">
-            <Badge tone="gold">Contoh — atur paket aslimu di panel admin</Badge>
-          </div>
-        )}
 
-        <div className="mx-auto mt-10 grid max-w-5xl items-start gap-6 lg:grid-cols-3">
-          {data.map((p) => {
+        {kosong ? (
+          <div className="mt-8 flex justify-center">
+            <ButtonLink href="/tryout" size="lg">
+              <IconPlay width={18} height={18} />
+              Coba Simulasi Gratis
+            </ButtonLink>
+          </div>
+        ) : (
+          <div className="mx-auto mt-10 grid max-w-5xl items-start gap-6 lg:grid-cols-3">
+          {plans.map((p) => {
             const gratis = p.harga <= 0;
             return (
               <div
@@ -576,7 +576,8 @@ function PricingSection({ plans }: { plans: PaketHargaRingkas[] }) {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
       </Container>
     </section>
   );
