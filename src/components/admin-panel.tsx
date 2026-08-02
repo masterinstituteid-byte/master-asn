@@ -39,6 +39,7 @@ import type { InfoPembayaran } from "@/lib/pengaturan";
 import type { TestimoniRingkas, TestimoniInput } from "@/lib/testimoni";
 import type { PaketHargaRingkas, PaketHargaInput } from "@/lib/paket-harga";
 import { formatRupiah } from "@/lib/format";
+import { siapkanGambar } from "@/lib/gambar-client";
 import {
   createSoalAction,
   updateSoalAction,
@@ -752,8 +753,10 @@ function ImageUpload({
     setErr(null);
     setBusy(true);
     try {
+      // Perkecil & seragamkan resolusi di browser sebelum diunggah.
+      const siap = await siapkanGambar(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", siap);
       const res = await uploadGambarAction(fd);
       if (res.ok && res.id) onChange(res.id);
       else setErr(res.error ?? "Gagal mengunggah.");

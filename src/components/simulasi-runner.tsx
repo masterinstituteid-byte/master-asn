@@ -295,7 +295,7 @@ export function SimulasiRunner({
                   <img
                     src={`/gambar/${soal.gambar}`}
                     alt="Gambar soal"
-                    className="mt-4 max-h-80 w-auto rounded-xl border border-line bg-white object-contain"
+                    className="mt-4 max-h-72 w-auto max-w-full rounded-xl border border-line bg-white object-contain"
                   />
                 )}
 
@@ -331,7 +331,7 @@ export function SimulasiRunner({
                             <img
                               src={`/gambar/${o.gambar}`}
                               alt={`Pilihan ${o.id}`}
-                              className={`${o.teks ? "mt-2" : ""} max-h-40 w-auto rounded-lg border border-line bg-white object-contain`}
+                              className={`${o.teks ? "mt-2" : ""} max-h-40 w-auto max-w-full rounded-lg border border-line bg-white object-contain`}
                             />
                           )}
                         </span>
