@@ -59,6 +59,7 @@ import {
   createPaketHargaAction,
   updatePaketHargaAction,
   deletePaketHargaAction,
+  uploadGambarAction,
 } from "@/app/admin/actions";
 
 const HURUF = ["A", "B", "C", "D", "E"];
@@ -735,14 +736,89 @@ function UploadModal({
   );
 }
 
+/* ===================== Unggah Gambar (untuk soal figural) ===================== */
+function ImageUpload({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const pick = async (file: File) => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await uploadGambarAction(fd);
+      if (res.ok && res.id) onChange(res.id);
+      else setErr(res.error ?? "Gagal mengunggah.");
+    } catch {
+      setErr("Gagal mengunggah gambar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) pick(f);
+        }}
+      />
+      {value ? (
+        <div className="relative inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/gambar/${value}`}
+            alt="pratinjau gambar"
+            className="h-24 w-auto rounded-lg border border-line bg-white object-contain"
+          />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-danger text-white shadow"
+            aria-label="Hapus gambar"
+          >
+            <IconClose width={13} height={13} />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line-strong px-3 py-1.5 text-xs font-medium text-slate hover:bg-muted hover:text-heading"
+        >
+          <IconDownload width={14} height={14} className="rotate-180" />
+          {busy ? "Mengunggah…" : "Tambah gambar"}
+        </button>
+      )}
+      {err && <p className="mt-1 text-xs text-danger">{err}</p>}
+    </div>
+  );
+}
+
 /* ===================== Form Soal (tambah/edit) ===================== */
 type FormState = {
   subtes: Subtes;
   materi: string;
   tingkat: Soal["tingkat"];
   pertanyaan: string;
+  gambar: string; // id gambar pertanyaan (figural), "" bila tidak ada
   pembahasan: string;
   opsiTeks: string[];
+  opsiGambar: string[]; // id gambar tiap opsi, "" bila tidak ada
   opsiPoin: number[];
   kunci: string;
 };
@@ -753,8 +829,10 @@ function emptyForm(): FormState {
     materi: "",
     tingkat: "HOTS",
     pertanyaan: "",
+    gambar: "",
     pembahasan: "",
     opsiTeks: ["", "", "", "", ""],
+    opsiGambar: ["", "", "", "", ""],
     opsiPoin: [5, 4, 3, 2, 1],
     kunci: "A",
   };
@@ -762,14 +840,17 @@ function emptyForm(): FormState {
 
 function formFromSoal(s: Soal): FormState {
   const teks = HURUF.map((h) => s.opsi.find((o) => o.id === h)?.teks ?? "");
+  const gambar = HURUF.map((h) => s.opsi.find((o) => o.id === h)?.gambar ?? "");
   const poin = HURUF.map((h) => s.opsi.find((o) => o.id === h)?.poin ?? 0);
   return {
     subtes: s.subtes,
     materi: s.materi,
     tingkat: s.tingkat,
     pertanyaan: s.pertanyaan,
+    gambar: s.gambar ?? "",
     pembahasan: s.pembahasan,
     opsiTeks: teks,
+    opsiGambar: gambar,
     opsiPoin: poin.map((p) => p || 1),
     kunci: s.kunci ?? "A",
   };
@@ -793,30 +874,43 @@ function SoalFormView({
   const [pending, startTransition] = useTransition();
   const isTKP = form.subtes === "TKP";
 
-  const set = (patch: Partial<FormState>) => setForm({ ...form, ...patch });
-  const setOpsi = (i: number, teks: string) => {
-    const arr = [...form.opsiTeks];
-    arr[i] = teks;
-    set({ opsiTeks: arr });
-  };
-  const setPoin = (i: number, poin: number) => {
-    const arr = [...form.opsiPoin];
-    arr[i] = poin;
-    set({ opsiPoin: arr });
-  };
+  // Pakai functional update agar aman terhadap update bersamaan (mis. beberapa
+  // unggahan gambar selesai hampir bersamaan) — hindari stale closure.
+  const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }));
+  const setOpsi = (i: number, teks: string) =>
+    setForm((f) => {
+      const arr = [...f.opsiTeks];
+      arr[i] = teks;
+      return { ...f, opsiTeks: arr };
+    });
+  const setPoin = (i: number, poin: number) =>
+    setForm((f) => {
+      const arr = [...f.opsiPoin];
+      arr[i] = poin;
+      return { ...f, opsiPoin: arr };
+    });
+  const setOpsiGambar = (i: number, id: string) =>
+    setForm((f) => {
+      const arr = [...f.opsiGambar];
+      arr[i] = id;
+      return { ...f, opsiGambar: arr };
+    });
 
   const buildInput = (): SoalInput | null => {
-    if (!form.pertanyaan.trim()) return null;
+    // Pertanyaan boleh berupa teks ATAU gambar (soal figural).
+    if (!form.pertanyaan.trim() && !form.gambar) return null;
     const opsi = HURUF.map((id, i) => ({
       id,
       teks: form.opsiTeks[i].trim(),
       ...(isTKP ? { poin: form.opsiPoin[i] } : {}),
-    })).filter((o) => o.teks);
+      ...(form.opsiGambar[i] ? { gambar: form.opsiGambar[i] } : {}),
+    })).filter((o) => o.teks || o.gambar); // opsi valid bila ada teks ATAU gambar
     if (opsi.length < 2) return null;
     return {
       subtes: form.subtes,
       materi: form.materi.trim() || "Umum",
       pertanyaan: form.pertanyaan.trim(),
+      gambar: form.gambar || null,
       opsi,
       kunci: isTKP ? null : form.kunci,
       pembahasan: form.pembahasan.trim(),
@@ -870,19 +964,27 @@ function SoalFormView({
         </div>
 
         <Field label="Pertanyaan">
-          <textarea value={form.pertanyaan} onChange={(e) => set({ pertanyaan: e.target.value })} rows={4} placeholder="Tulis pertanyaan…" className={inputCls} />
+          <textarea value={form.pertanyaan} onChange={(e) => set({ pertanyaan: e.target.value })} rows={4} placeholder="Tulis pertanyaan… (boleh kosong bila soal hanya gambar)" className={inputCls} />
         </Field>
+
+        <div>
+          <span className="mb-1.5 block text-sm font-semibold text-heading">
+            Gambar pertanyaan{" "}
+            <span className="font-normal text-slate-400">(opsional — untuk soal figural)</span>
+          </span>
+          <ImageUpload value={form.gambar} onChange={(id) => set({ gambar: id })} />
+        </div>
 
         <div>
           <p className="mb-2 text-sm font-semibold text-heading">
             Pilihan jawaban{" "}
             <span className="font-normal text-slate-400">
-              {isTKP ? "(isi poin 1–5 tiap opsi)" : "(pilih satu kunci yang benar)"}
+              {isTKP ? "(isi poin 1–5 tiap opsi)" : "(pilih satu kunci yang benar)"} · teks dan/atau gambar
             </span>
           </p>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {HURUF.map((h, i) => (
-              <div key={h} className="flex items-center gap-2">
+              <div key={h} className="flex items-start gap-2 rounded-xl border border-line p-2.5">
                 {!isTKP && (
                   <input
                     type="radio"
@@ -890,16 +992,19 @@ function SoalFormView({
                     checked={form.kunci === h}
                     onChange={() => set({ kunci: h })}
                     aria-label={`Jadikan ${h} kunci`}
-                    className="h-4 w-4 accent-[var(--color-brand-600)]"
+                    className="mt-2.5 h-4 w-4 accent-[var(--color-brand-600)]"
                   />
                 )}
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-bold text-slate">{h}</span>
-                <input value={form.opsiTeks[i]} onChange={(e) => setOpsi(i, e.target.value)} placeholder={`Opsi ${h}`} className={inputCls} />
+                <span className="mt-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-bold text-slate">{h}</span>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <input value={form.opsiTeks[i]} onChange={(e) => setOpsi(i, e.target.value)} placeholder={`Opsi ${h} (teks — boleh kosong bila pakai gambar)`} className={inputCls} />
+                  <ImageUpload value={form.opsiGambar[i]} onChange={(id) => setOpsiGambar(i, id)} />
+                </div>
                 {isTKP && (
                   <select
                     value={form.opsiPoin[i]}
                     onChange={(e) => setPoin(i, Number(e.target.value))}
-                    className="w-20 shrink-0 rounded-xl border border-line bg-surface px-2 py-2.5 text-sm text-heading outline-none focus:border-brand-600"
+                    className="mt-1 w-20 shrink-0 rounded-xl border border-line bg-surface px-2 py-2.5 text-sm text-heading outline-none focus:border-brand-600"
                     aria-label={`Poin opsi ${h}`}
                   >
                     {[1, 2, 3, 4, 5].map((p) => <option key={p} value={p}>{p} poin</option>)}

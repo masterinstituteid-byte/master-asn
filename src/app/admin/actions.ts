@@ -17,6 +17,7 @@ import {
   deletePaket,
 } from "@/lib/paket";
 import { parseSoalExcel, type HasilParse } from "@/lib/excel";
+import { simpanGambar, MIME_GAMBAR } from "@/lib/gambar";
 import { createModul, deleteModul } from "@/lib/modul";
 import { setStatusTransaksi, type StatusTransaksi } from "@/lib/transaksi";
 import { setInfoPembayaran, type InfoPembayaran } from "@/lib/pengaturan";
@@ -125,6 +126,23 @@ export async function importSoalAction(
   const n = await importSoalToPaket(paketId, soal, mode);
   revalidate();
   return n;
+}
+
+// ---- Gambar soal (figural) ----
+export async function uploadGambarAction(
+  formData: FormData,
+): Promise<{ ok: boolean; id?: string; error?: string }> {
+  await assertAdmin();
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, error: "Tidak ada gambar." };
+  if (!MIME_GAMBAR.includes(file.type)) {
+    return { ok: false, error: "Format harus PNG, JPG, WebP, atau GIF." };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { ok: false, error: "Ukuran gambar maksimal 5 MB." };
+  }
+  const id = await simpanGambar(await file.arrayBuffer(), file.type);
+  return { ok: true, id };
 }
 
 // ---- Modul / Materi ----

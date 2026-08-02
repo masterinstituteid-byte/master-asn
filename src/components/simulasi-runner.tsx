@@ -285,9 +285,19 @@ export function SimulasiRunner({
                   </span>
                 </div>
 
-                <p className="mt-4 text-lg font-medium leading-relaxed text-heading">
-                  {soal.pertanyaan}
-                </p>
+                {soal.pertanyaan && (
+                  <p className="mt-4 text-lg font-medium leading-relaxed text-heading">
+                    {soal.pertanyaan}
+                  </p>
+                )}
+                {soal.gambar && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/gambar/${soal.gambar}`}
+                    alt="Gambar soal"
+                    className="mt-4 max-h-80 w-auto rounded-xl border border-line bg-white object-contain"
+                  />
+                )}
 
                 <div className="mt-6 space-y-3" role="radiogroup" aria-label="Pilihan jawaban">
                   {soal.opsi.map((o) => {
@@ -299,7 +309,7 @@ export function SimulasiRunner({
                         role="radio"
                         aria-checked={selected}
                         onClick={() => pilih(o.id)}
-                        className={`flex w-full items-center gap-3.5 rounded-2xl border px-4 py-3.5 text-left text-[0.95rem] transition-all duration-150 ${
+                        className={`flex w-full items-start gap-3.5 rounded-2xl border px-4 py-3.5 text-left text-[0.95rem] transition-all duration-150 ${
                           selected
                             ? "border-brand-600 bg-brand-50 font-semibold text-brand-700 shadow-[0_0_0_1px_var(--color-brand-600)]"
                             : "border-line bg-surface text-slate hover:border-line-strong hover:bg-muted/40"
@@ -314,8 +324,18 @@ export function SimulasiRunner({
                         >
                           {o.id}
                         </span>
-                        <span className="flex-1">{o.teks}</span>
-                        {selected && <IconCheck width={18} height={18} className="text-brand-600" />}
+                        <span className="flex-1">
+                          {o.teks}
+                          {o.gambar && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={`/gambar/${o.gambar}`}
+                              alt={`Pilihan ${o.id}`}
+                              className={`${o.teks ? "mt-2" : ""} max-h-40 w-auto rounded-lg border border-line bg-white object-contain`}
+                            />
+                          )}
+                        </span>
+                        {selected && <IconCheck width={18} height={18} className="shrink-0 self-start text-brand-600" />}
                       </button>
                     );
                   })}

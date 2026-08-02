@@ -64,6 +64,8 @@ export interface Opsi {
   teks: string;
   /** TKP: poin 1–5. Untuk TWK/TIU dikosongkan (pakai `benar`). */
   poin?: number;
+  /** id Gambar untuk pilihan bergambar (soal figural). */
+  gambar?: string;
 }
 
 export interface Soal {
@@ -76,6 +78,8 @@ export interface Soal {
   kunci?: string;
   pembahasan: string;
   tingkat: "Mudah" | "Sedang" | "HOTS";
+  /** id Gambar untuk pertanyaan (soal figural). */
+  gambar?: string | null;
   /** Paket pemilik soal (null untuk soal lepas / contoh statis). */
   paketId?: string | null;
 }

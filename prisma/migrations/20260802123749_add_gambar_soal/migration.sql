@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "Soal" ADD COLUMN "gambar" TEXT;
+
+-- CreateTable
+CREATE TABLE "Gambar" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "mime" TEXT NOT NULL,
+    "ukuran" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

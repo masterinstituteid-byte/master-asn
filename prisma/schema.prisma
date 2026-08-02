@@ -130,6 +130,7 @@ model Soal {
   subtes     String
   materi     String
   pertanyaan String
+  gambar     String? // id Gambar untuk pertanyaan (soal figural)
   opsi       String
   kunci      String?
   pembahasan String
@@ -139,4 +140,11 @@ model Soal {
   paket      Paket?   @relation(fields: [paketId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model Gambar {
+  id        String   @id @default(cuid())
+  mime      String
+  ukuran    Int      @default(0)
+  createdAt DateTime @default(now())
 }

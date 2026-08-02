@@ -131,9 +131,19 @@ function SoalCard({ soal, nomor }: { soal: Soal; nomor: number }) {
         <span className="tnum ml-auto text-xs text-slate-400">#{String(nomor).padStart(2, "0")}</span>
       </div>
 
-      <p className="mt-4 text-[0.95rem] font-medium leading-relaxed text-heading">
-        {soal.pertanyaan}
-      </p>
+      {soal.pertanyaan && (
+        <p className="mt-4 text-[0.95rem] font-medium leading-relaxed text-heading">
+          {soal.pertanyaan}
+        </p>
+      )}
+      {soal.gambar && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/gambar/${soal.gambar}`}
+          alt="Gambar soal"
+          className="mt-4 max-h-72 w-auto rounded-xl border border-line bg-white object-contain"
+        />
+      )}
 
       <div className="mt-4 space-y-2">
         {soal.opsi.map((o) => {
@@ -141,14 +151,24 @@ function SoalCard({ soal, nomor }: { soal: Soal; nomor: number }) {
           return (
             <div
               key={o.id}
-              className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm transition-colors ${
+              className={`flex items-start gap-3 rounded-xl border px-3.5 py-2.5 text-sm transition-colors ${
                 kunci ? "border-success/40 bg-success-50/60" : "border-line"
               }`}
             >
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-bold text-slate-400">
                 {o.id}
               </span>
-              <span className="flex-1 text-slate">{o.teks}</span>
+              <span className="flex-1 text-slate">
+                {o.teks}
+                {o.gambar && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/gambar/${o.gambar}`}
+                    alt={`Pilihan ${o.id}`}
+                    className={`${o.teks ? "mt-2" : ""} max-h-36 w-auto rounded-lg border border-line bg-white object-contain`}
+                  />
+                )}
+              </span>
               {reveal && isTKP && (
                 <span className="tnum text-xs font-semibold text-slate-400">{o.poin} poin</span>
               )}

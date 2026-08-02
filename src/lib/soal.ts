@@ -10,6 +10,7 @@ interface SoalRow {
   subtes: string;
   materi: string;
   pertanyaan: string;
+  gambar: string | null;
   opsi: string;
   kunci: string | null;
   pembahasan: string;
@@ -23,6 +24,7 @@ function toApp(row: SoalRow): Soal {
     subtes: row.subtes as Subtes,
     materi: row.materi,
     pertanyaan: row.pertanyaan,
+    gambar: row.gambar,
     opsi: JSON.parse(row.opsi) as Opsi[],
     kunci: row.kunci ?? undefined,
     pembahasan: row.pembahasan,
@@ -35,6 +37,7 @@ export interface SoalInput {
   subtes: Subtes;
   materi: string;
   pertanyaan: string;
+  gambar?: string | null;
   opsi: Opsi[];
   kunci?: string | null;
   pembahasan: string;
@@ -150,6 +153,7 @@ export async function createSoal(input: SoalInput): Promise<Soal> {
       subtes: input.subtes,
       materi: input.materi,
       pertanyaan: input.pertanyaan,
+      gambar: input.gambar ?? null,
       opsi: JSON.stringify(input.opsi),
       kunci: input.kunci ?? null,
       pembahasan: input.pembahasan,
@@ -168,6 +172,7 @@ export async function updateSoal(id: string, input: SoalInput): Promise<Soal> {
       subtes: input.subtes,
       materi: input.materi,
       pertanyaan: input.pertanyaan,
+      gambar: input.gambar ?? null,
       opsi: JSON.stringify(input.opsi),
       kunci: input.kunci ?? null,
       pembahasan: input.pembahasan,
@@ -202,6 +207,7 @@ export async function importSoalToPaket(
     subtes: input.subtes,
     materi: input.materi,
     pertanyaan: input.pertanyaan,
+    gambar: input.gambar ?? null,
     opsi: JSON.stringify(input.opsi),
     kunci: input.kunci ?? null,
     pembahasan: input.pembahasan,

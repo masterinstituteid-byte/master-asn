@@ -292,9 +292,19 @@ function PembahasanItem({
 
       {open && (
         <div className="border-t border-line px-5 py-5 sm:pl-[4.75rem]">
-          <p className="text-[0.95rem] font-medium leading-relaxed text-heading">
-            {soal.pertanyaan}
-          </p>
+          {soal.pertanyaan && (
+            <p className="text-[0.95rem] font-medium leading-relaxed text-heading">
+              {soal.pertanyaan}
+            </p>
+          )}
+          {soal.gambar && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/gambar/${soal.gambar}`}
+              alt="Gambar soal"
+              className="mt-3 max-h-72 w-auto rounded-xl border border-line bg-white object-contain"
+            />
+          )}
           <div className="mt-4 space-y-2">
             {soal.opsi.map((o) => {
               const dipilih = jawaban === o.id;
@@ -311,7 +321,17 @@ function PembahasanItem({
                   }`}
                 >
                   <span className="font-bold text-slate-400">{o.id}</span>
-                  <span className="flex-1 text-slate">{o.teks}</span>
+                  <span className="flex-1 text-slate">
+                    {o.teks}
+                    {o.gambar && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/gambar/${o.gambar}`}
+                        alt={`Pilihan ${o.id}`}
+                        className={`${o.teks ? "mt-2" : ""} max-h-36 w-auto rounded-lg border border-line bg-white object-contain`}
+                      />
+                    )}
+                  </span>
                   {isTKP && (
                     <span className="tnum text-xs font-semibold text-slate-400">{o.poin} poin</span>
                   )}
