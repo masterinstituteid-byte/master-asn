@@ -55,21 +55,24 @@ export function SimulasiRunner({
   const total = soalList.length;
   const storageKey = `masterasn:sim:${paketId ?? "default"}`;
 
-  // Pulihkan progres bila masih ada waktu tersisa (lanjut setelah refresh / jaringan putus).
-  // Pengecekan waktu dilakukan di dalam initializer useState (bukan saat render).
-  const [deadline] = useState(() => {
-    const r = bacaProgres(storageKey);
-    return r && r.deadline > Date.now() ? r.deadline : Date.now() + TRYOUT_DURASI_DETIK * 1000;
-  });
-  const [index, setIndex] = useState(() => {
-    const r = bacaProgres(storageKey);
-    return r && r.deadline > Date.now() ? Math.min(r.index ?? 0, Math.max(0, total - 1)) : 0;
-  });
-  const [answers, setAnswers] = useState<Record<string, string | null>>(() => {
-    const r = bacaProgres(storageKey);
-    return r && r.deadline > Date.now() ? r.answers ?? {} : {};
-  });
+  // Nilai awal aman untuk SSR (localStorage tak ada di server). Progres dipulihkan
+  // SETELAH mount agar server & klien cocok (tidak ada hydration mismatch).
+  const [deadline, setDeadline] = useState(() => Date.now() + TRYOUT_DURASI_DETIK * 1000);
+  const [index, setIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string | null>>({});
   const [timeLeft, setTimeLeft] = useState(TRYOUT_DURASI_DETIK);
+  const [siapSimpan, setSiapSimpan] = useState(false);
+
+  // Pulihkan progres dari localStorage sekali setelah mount (khusus klien).
+  useEffect(() => {
+    const r = bacaProgres(storageKey);
+    if (r && r.deadline > Date.now()) {
+      setDeadline(r.deadline);
+      if (typeof r.index === "number") setIndex(Math.min(r.index, Math.max(0, total - 1)));
+      if (r.answers) setAnswers(r.answers);
+    }
+    setSiapSimpan(true);
+  }, [storageKey, total]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -116,7 +119,8 @@ export function SimulasiRunner({
   // Simpan progres otomatis (jawaban, posisi, deadline) agar ujian bisa dilanjutkan
   // setelah refresh / jaringan putus / ganti koneksi.
   useEffect(() => {
-    if (submitting || total === 0) return;
+    // Jangan menyimpan sebelum pemulihan progres selesai (agar tidak menimpa data lama).
+    if (!siapSimpan || submitting || total === 0) return;
     try {
       window.localStorage.setItem(
         storageKey,
@@ -125,7 +129,7 @@ export function SimulasiRunner({
     } catch {
       /* ignore */
     }
-  }, [answers, index, deadline, submitting, total, storageKey]);
+  }, [answers, index, deadline, siapSimpan, submitting, total, storageKey]);
 
   // Countdown berbasis jam nyata — tetap akurat meski tab tidak aktif / di-background.
   useEffect(() => {
