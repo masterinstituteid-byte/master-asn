@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Plus_Jakarta_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
   variable: "--font-display-face",
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
+  display: "swap",
+});
+
+// Poppins — dipakai khusus di hero section landing page.
+const poppins = Poppins({
+  variable: "--font-poppins-face",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -32,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${display.variable} ${body.variable} h-full antialiased`}
+      className={`${display.variable} ${body.variable} ${poppins.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-ink">
         <a

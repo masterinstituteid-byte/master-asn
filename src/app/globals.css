@@ -54,6 +54,7 @@
   /* Fonts */
   --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+  --font-poppins: var(--font-poppins-face), ui-sans-serif, system-ui, sans-serif;
 
   /* Radii */
   --radius-xl: 1rem;

@@ -64,12 +64,12 @@ function Hero() {
 
       <Container wide className="relative py-10 lg:py-14">
         <div className="mx-auto max-w-3xl text-center animate-rise">
-          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-[3.6rem] text-balance">
+          <h1 className="font-poppins text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-[3.6rem] text-balance">
             Siap lulus seleksi{" "}
             <RotatingWord words={["CPNS", "PPPK", "BUMN"]} />
             <br className="hidden sm:block" /> tanpa kejutan di hari-H.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate">
+          <p className="font-poppins mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate">
             Belajar terstruktur TWK, TIU, dan TKP lalu uji dengan simulasi yang meniru
             sistem CAT BKN — timer presisi, navigasi soal, dan penilaian otomatis
             berbasis <strong className="text-heading">passing grade</strong> resmi.
