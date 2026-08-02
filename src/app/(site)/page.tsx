@@ -44,7 +44,6 @@ export default async function HomePage() {
       <TrustStrip />
       <SubtesSection />
       <FeatureRows />
-      <ExperienceSection />
       <TestimonialSection items={testimoni} />
       <PricingSection plans={plans} />
       <FaqSection />
@@ -345,56 +344,6 @@ function FaqSection() {
 }
 
 /* ============================== EXPERIENCE / HOW ============================== */
-function ExperienceSection() {
-  const steps = [
-    {
-      n: "01",
-      t: "Pelajari materi terstruktur",
-      d: "Modul TWK, TIU, TKP dari dasar sampai HOTS, lengkap dengan poin kunci tiap topik.",
-    },
-    {
-      n: "02",
-      t: "Kerjakan simulasi CAT",
-      d: "Masuk ruang ujian: timer berjalan, navigasi soal aktif, tandai yang ragu, lalu submit.",
-    },
-    {
-      n: "03",
-      t: "Baca pembahasan & analitik",
-      d: "Lihat nilai per subtes vs passing grade, kelemahan per materi, dan pembahasan tiap soal.",
-    },
-  ];
-  return (
-    <section className="py-10 lg:py-14">
-      <Container wide>
-        <SectionHeading
-          align="center"
-          eyebrow="Alur Belajar"
-          title="Tiga langkah dari nol menuju siap ujian"
-          desc="Sistem yang mengulang siklus belajar–uji–evaluasi sampai nilaimu stabil di atas passing grade."
-          className="mx-auto"
-        />
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {steps.map((s) => (
-            <Card key={s.n} className="p-7">
-              <span className="tnum grid h-12 w-12 place-items-center rounded-2xl bg-navy text-base font-bold text-white">
-                {s.n}
-              </span>
-              <h3 className="mt-5 text-lg font-bold text-heading">{s.t}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate">{s.d}</p>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-10 flex justify-center">
-          <ButtonLink href="/tryout" size="lg">
-            Coba alurnya sekarang
-            <IconArrowRight width={18} height={18} />
-          </ButtonLink>
-        </div>
-      </Container>
-    </section>
-  );
-}
-
 /* ============================== TESTIMONIALS ============================== */
 const TESTIMONI_CONTOH: TestimoniRingkas[] = [
   { id: "c1", nama: "Rani Puspitasari", peran: "Peserta SKD · ilustrasi", pesan: "Simulasinya benar-benar seperti CAT asli. Pas hari-H saya tidak kaget dengan timer dan navigasi soalnya.", rating: 5, aktif: true, urutan: 0 },
