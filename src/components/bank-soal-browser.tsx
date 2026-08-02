@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { SUBTES_ORDER, type Subtes, type Soal } from "@/lib/skd";
 import { Card, Badge } from "@/components/ui";
+import { TeksSoal } from "@/components/teks-soal";
 import { IconEye, IconCheck, IconFilter } from "@/components/icons";
 
 type SubtesFilter = "ALL" | Subtes;
@@ -131,11 +132,10 @@ function SoalCard({ soal, nomor }: { soal: Soal; nomor: number }) {
         <span className="tnum ml-auto text-xs text-slate-400">#{String(nomor).padStart(2, "0")}</span>
       </div>
 
-      {soal.pertanyaan && (
-        <p className="mt-4 text-[0.95rem] font-medium leading-relaxed text-heading">
-          {soal.pertanyaan}
-        </p>
-      )}
+      <TeksSoal
+        text={soal.pertanyaan}
+        className="mt-4 text-[0.95rem] font-medium leading-relaxed text-heading"
+      />
       {soal.gambar && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -196,7 +196,7 @@ function SoalCard({ soal, nomor }: { soal: Soal; nomor: number }) {
                 <span className="font-bold text-success">{soal.kunci}</span>
               </p>
             )}
-            <p className="text-sm leading-relaxed text-slate">{soal.pembahasan}</p>
+            <TeksSoal text={soal.pembahasan} className="text-sm leading-relaxed text-slate" />
           </div>
         )}
       </div>

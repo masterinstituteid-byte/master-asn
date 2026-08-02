@@ -965,6 +965,12 @@ function SoalFormView({
 
         <Field label="Pertanyaan">
           <textarea value={form.pertanyaan} onChange={(e) => set({ pertanyaan: e.target.value })} rows={4} placeholder="Tulis pertanyaan… (boleh kosong bila soal hanya gambar)" className={inputCls} />
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
+            Pecahan cukup diketik biasa (mis. <code className="rounded bg-muted px-1">2/3</code>, ½, √, x²).
+            Untuk <b>tabel</b>, pisahkan kolom dengan tanda <code className="rounded bg-muted px-1">|</code> — baris pertama jadi judul kolom. Contoh:
+            <br />
+            <code className="mt-1 block whitespace-pre rounded bg-muted px-2 py-1 text-[0.7rem] text-slate">{"Tahun | Produksi\n2023 | 120\n2024 | 150"}</code>
+          </p>
         </Field>
 
         <div>

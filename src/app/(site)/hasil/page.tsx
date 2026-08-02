@@ -25,6 +25,7 @@ import {
   type HasilTersimpan,
   type Soal,
 } from "@/lib/skd";
+import { TeksSoal } from "@/components/teks-soal";
 import { getPeringkatAction } from "@/app/simulasi/actions";
 import type { Peringkat } from "@/lib/hasil";
 
@@ -292,11 +293,10 @@ function PembahasanItem({
 
       {open && (
         <div className="border-t border-line px-5 py-5 sm:pl-[4.75rem]">
-          {soal.pertanyaan && (
-            <p className="text-[0.95rem] font-medium leading-relaxed text-heading">
-              {soal.pertanyaan}
-            </p>
-          )}
+          <TeksSoal
+            text={soal.pertanyaan}
+            className="text-[0.95rem] font-medium leading-relaxed text-heading"
+          />
           {soal.gambar && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -346,7 +346,10 @@ function PembahasanItem({
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
               Pembahasan
             </p>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate">{soal.pembahasan}</p>
+            <TeksSoal
+              text={soal.pembahasan}
+              className="mt-1.5 text-sm leading-relaxed text-slate"
+            />
           </div>
         </div>
       )}

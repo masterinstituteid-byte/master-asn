@@ -21,6 +21,7 @@ import {
   IconWarning,
 } from "@/components/icons";
 import { Button, Container, ButtonLink } from "@/components/ui";
+import { TeksSoal } from "@/components/teks-soal";
 import { simpanHasilAction } from "@/app/simulasi/actions";
 
 // Progres ujian yang disimpan agar bisa dilanjutkan setelah refresh / jaringan putus.
@@ -285,11 +286,10 @@ export function SimulasiRunner({
                   </span>
                 </div>
 
-                {soal.pertanyaan && (
-                  <p className="mt-4 text-lg font-medium leading-relaxed text-heading">
-                    {soal.pertanyaan}
-                  </p>
-                )}
+                <TeksSoal
+                  text={soal.pertanyaan}
+                  className="mt-4 text-lg font-medium leading-relaxed text-heading"
+                />
                 {soal.gambar && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
