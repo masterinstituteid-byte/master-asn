@@ -23,6 +23,25 @@ import {
 import { Button, Container, ButtonLink } from "@/components/ui";
 import { simpanHasilAction } from "@/app/simulasi/actions";
 
+// Progres ujian yang disimpan agar bisa dilanjutkan setelah refresh / jaringan putus.
+interface ProgresSim {
+  deadline: number;
+  index: number;
+  answers: Record<string, string | null>;
+}
+
+function bacaProgres(key: string): ProgresSim | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as ProgresSim;
+    return typeof p.deadline === "number" ? p : null;
+  } catch {
+    return null;
+  }
+}
+
 export function SimulasiRunner({
   soal: soalList,
   paketId,
@@ -34,10 +53,22 @@ export function SimulasiRunner({
 }) {
   const router = useRouter();
   const total = soalList.length;
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | null>>({});
-  // Waktu selesai (deadline) berdasarkan jam nyata — dibuat sekali saat mulai.
-  const [deadline] = useState(() => Date.now() + TRYOUT_DURASI_DETIK * 1000);
+  const storageKey = `masterasn:sim:${paketId ?? "default"}`;
+
+  // Pulihkan progres bila masih ada waktu tersisa (lanjut setelah refresh / jaringan putus).
+  // Pengecekan waktu dilakukan di dalam initializer useState (bukan saat render).
+  const [deadline] = useState(() => {
+    const r = bacaProgres(storageKey);
+    return r && r.deadline > Date.now() ? r.deadline : Date.now() + TRYOUT_DURASI_DETIK * 1000;
+  });
+  const [index, setIndex] = useState(() => {
+    const r = bacaProgres(storageKey);
+    return r && r.deadline > Date.now() ? Math.min(r.index ?? 0, Math.max(0, total - 1)) : 0;
+  });
+  const [answers, setAnswers] = useState<Record<string, string | null>>(() => {
+    const r = bacaProgres(storageKey);
+    return r && r.deadline > Date.now() ? r.answers ?? {} : {};
+  });
   const [timeLeft, setTimeLeft] = useState(TRYOUT_DURASI_DETIK);
   const [showConfirm, setShowConfirm] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -60,6 +91,7 @@ export function SimulasiRunner({
     const tersimpan: HasilTersimpan = { ...hasil, soal: soalList, paketId, paketNama };
     try {
       localStorage.setItem(HASIL_STORAGE_KEY, JSON.stringify(tersimpan));
+      localStorage.removeItem(storageKey); // progres selesai — bersihkan
     } catch {
       /* ignore */
     }
@@ -79,7 +111,21 @@ export function SimulasiRunner({
       /* ignore */
     }
     router.push("/hasil");
-  }, [soalList, answers, deadline, router, paketId, paketNama]);
+  }, [soalList, answers, deadline, router, paketId, paketNama, storageKey]);
+
+  // Simpan progres otomatis (jawaban, posisi, deadline) agar ujian bisa dilanjutkan
+  // setelah refresh / jaringan putus / ganti koneksi.
+  useEffect(() => {
+    if (submitting || total === 0) return;
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify({ deadline, index, answers } satisfies ProgresSim),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [answers, index, deadline, submitting, total, storageKey]);
 
   // Countdown berbasis jam nyata — tetap akurat meski tab tidak aktif / di-background.
   useEffect(() => {
