@@ -40,7 +40,7 @@ import type { TestimoniRingkas, TestimoniInput } from "@/lib/testimoni";
 import type { PaketHargaRingkas, PaketHargaInput } from "@/lib/paket-harga";
 import { formatRupiah } from "@/lib/format";
 import { siapkanGambar } from "@/lib/gambar-client";
-import { TeksSoal } from "@/components/teks-soal";
+import { TeksSoal, TeksInline } from "@/components/teks-soal";
 import {
   buatRanking,
   daftarPaketDariHasil,
@@ -750,13 +750,16 @@ function RichTextArea({
   onChange,
   rows = 4,
   placeholder,
+  multiline = true,
 }: {
   value: string;
   onChange: (v: string) => void;
   rows?: number;
   placeholder?: string;
+  /** false = input satu baris tanpa tombol tabel (untuk opsi jawaban). */
+  multiline?: boolean;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const ref = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
   const [baris, setBaris] = useState(2);
   const [kolom, setKolom] = useState(3);
   const [tabelOpen, setTabelOpen] = useState(false);
@@ -801,7 +804,7 @@ function RichTextArea({
     ["π", "π", false],
   ];
 
-  const adaPreview = value.includes("$") || value.includes("|");
+  const adaPreview = value.includes("$") || (multiline && value.includes("|"));
 
   return (
     <div>
@@ -816,16 +819,18 @@ function RichTextArea({
             {label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setTabelOpen((v) => !v)}
-          className="rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-medium text-slate hover:bg-muted hover:text-heading"
-        >
-          + Tabel
-        </button>
+        {multiline && (
+          <button
+            type="button"
+            onClick={() => setTabelOpen((v) => !v)}
+            className="rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-medium text-slate hover:bg-muted hover:text-heading"
+          >
+            + Tabel
+          </button>
+        )}
       </div>
 
-      {tabelOpen && (
+      {multiline && tabelOpen && (
         <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-muted/40 p-2 text-xs">
           <span className="text-slate">Baris</span>
           <input
@@ -855,21 +860,41 @@ function RichTextArea({
         </div>
       )}
 
-      <textarea
-        ref={ref}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={rows}
-        placeholder={placeholder}
-        className={inputCls}
-      />
+      {multiline ? (
+        <textarea
+          ref={(el) => {
+            ref.current = el;
+          }}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={rows}
+          placeholder={placeholder}
+          className={inputCls}
+        />
+      ) : (
+        <input
+          ref={(el) => {
+            ref.current = el;
+          }}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={inputCls}
+        />
+      )}
 
       {adaPreview && (
-        <div className="mt-2 rounded-xl border border-line bg-muted/20 p-3">
+        <div className="mt-2 rounded-xl border border-line bg-muted/20 p-2.5">
           <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-400">
             Pratinjau
           </p>
-          <TeksSoal text={value} className="text-sm leading-relaxed text-heading" />
+          {multiline ? (
+            <TeksSoal text={value} className="text-sm leading-relaxed text-heading" />
+          ) : (
+            <span className="text-sm leading-relaxed text-heading">
+              <TeksInline text={value} />
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -1148,7 +1173,12 @@ function SoalFormView({
                 )}
                 <span className="mt-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-bold text-slate">{h}</span>
                 <div className="min-w-0 flex-1 space-y-2">
-                  <input value={form.opsiTeks[i]} onChange={(e) => setOpsi(i, e.target.value)} placeholder={`Opsi ${h} (teks — boleh kosong bila pakai gambar)`} className={inputCls} />
+                  <RichTextArea
+                    value={form.opsiTeks[i]}
+                    onChange={(v) => setOpsi(i, v)}
+                    multiline={false}
+                    placeholder={`Opsi ${h} (teks — boleh kosong bila pakai gambar)`}
+                  />
                   <ImageUpload value={form.opsiGambar[i]} onChange={(id) => setOpsiGambar(i, id)} />
                 </div>
                 {isTKP && (
