@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Container,
   Card,
@@ -19,11 +19,13 @@ import {
 } from "@/components/icons";
 import {
   SUBTES,
+  SUBTES_ORDER,
   formatWaktu,
   HASIL_STORAGE_KEY,
   skorSoal,
   type HasilTersimpan,
   type Soal,
+  type Subtes,
 } from "@/lib/skd";
 import { TeksSoal } from "@/components/teks-soal";
 import { getPeringkatAction } from "@/app/simulasi/actions";
@@ -204,19 +206,74 @@ export default function HasilPage() {
       <section className="border-t border-line bg-surface py-14">
         <Container wide>
           <h2 className="text-2xl font-bold text-heading">Pembahasan</h2>
-          <p className="mt-2 text-slate">Tinjau setiap soal, jawabanmu, dan penjelasannya.</p>
-          <div className="mt-8 space-y-3">
-            {(hasil.soal ?? []).map((s, i) => (
-              <PembahasanItem
-                key={s.id}
-                soal={s}
-                nomor={i + 1}
-                jawaban={hasil.jawaban[s.id] ?? null}
-              />
-            ))}
-          </div>
+          <p className="mt-2 text-slate">
+            Pilih subtes untuk meninjau soal, jawabanmu, dan penjelasannya.
+          </p>
+          <PembahasanList soal={hasil.soal ?? []} jawaban={hasil.jawaban} />
         </Container>
       </section>
+    </>
+  );
+}
+
+function PembahasanList({
+  soal,
+  jawaban,
+}: {
+  soal: Soal[];
+  jawaban: Record<string, string | null>;
+}) {
+  // Simpan nomor global (posisi asli di ujian 1–110) sebelum difilter.
+  const berNomor = useMemo(() => soal.map((s, i) => ({ s, nomor: i + 1 })), [soal]);
+
+  // Jumlah soal per subtes untuk label tab.
+  const jumlah = useMemo(() => {
+    const c: Record<string, number> = { ALL: soal.length };
+    for (const sub of SUBTES_ORDER) c[sub] = soal.filter((s) => s.subtes === sub).length;
+    return c;
+  }, [soal]);
+
+  // Tab hanya untuk subtes yang punya soal, ditambah "Semua" di akhir.
+  const tabs = useMemo(() => {
+    const t: { key: "ALL" | Subtes; label: string }[] = SUBTES_ORDER.filter(
+      (sub) => jumlah[sub] > 0,
+    ).map((sub) => ({ key: sub, label: `${sub} · ${jumlah[sub]}` }));
+    t.push({ key: "ALL", label: `Semua · ${jumlah.ALL}` });
+    return t;
+  }, [jumlah]);
+
+  // Default: subtes pertama yang tersedia (agar tidak langsung 110 nomor).
+  const [filter, setFilter] = useState<"ALL" | Subtes>(
+    () => SUBTES_ORDER.find((sub) => soal.some((s) => s.subtes === sub)) ?? "ALL",
+  );
+
+  const tampil = filter === "ALL" ? berNomor : berNomor.filter((x) => x.s.subtes === filter);
+
+  return (
+    <>
+      <div className="mt-6 flex flex-wrap gap-2">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setFilter(t.key)}
+            aria-pressed={filter === t.key}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+              filter === t.key
+                ? "bg-navy text-white"
+                : "border border-line bg-surface text-slate hover:bg-muted"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {tampil.map(({ s, nomor }) => (
+          <PembahasanItem key={s.id} soal={s} nomor={nomor} jawaban={jawaban[s.id] ?? null} />
+        ))}
+      </div>
     </>
   );
 }
