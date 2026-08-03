@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [konfirmasi, setKonfirmasi] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,10 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (mode === "daftar" && password !== konfirmasi) {
+      setError("Konfirmasi kata sandi tidak cocok.");
+      return;
+    }
     setLoading(true);
     try {
       const endpoint = mode === "masuk" ? "/api/auth/login" : "/api/auth/register";
@@ -201,6 +206,22 @@ export default function LoginPage() {
                 </button>
               </div>
             </Field>
+
+            {mode === "daftar" && (
+              <Field label="Konfirmasi kata sandi" htmlFor="konfirmasi">
+                <input
+                  id="konfirmasi"
+                  type={showPw ? "text" : "password"}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={konfirmasi}
+                  onChange={(e) => setKonfirmasi(e.target.value)}
+                  placeholder="Ulangi kata sandi"
+                  className={inputCls}
+                />
+              </Field>
+            )}
 
             {error && (
               <div
