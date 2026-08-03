@@ -1287,11 +1287,9 @@ function RankingView({ hasil }: { hasil: HasilRingkas[] }) {
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-semibold text-heading">{r.userNama}</p>
-                    <p className="text-xs text-slate-400">{r.userEmail}</p>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="tnum font-bold text-heading">{r.nilaiTotal}</span>
-                    <span className="tnum text-xs text-slate-400">/{r.nilaiMaksTotal}</span>
                   </td>
                   {SUBTES_ORDER.map((s) => {
                     const sub = r.perSubtes.find((x) => x.subtes === s);
