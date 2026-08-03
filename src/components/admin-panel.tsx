@@ -41,6 +41,11 @@ import type { PaketHargaRingkas, PaketHargaInput } from "@/lib/paket-harga";
 import { formatRupiah } from "@/lib/format";
 import { siapkanGambar } from "@/lib/gambar-client";
 import {
+  buatRanking,
+  daftarPaketDariHasil,
+  type ModeRanking,
+} from "@/lib/ranking";
+import {
   createSoalAction,
   updateSoalAction,
   deleteSoalAction,
@@ -179,7 +184,7 @@ export function AdminPanel({
 
         {section === "pengguna" && <UserList users={users} adminEmail={adminEmail} />}
 
-        {section === "hasil" && <HasilList hasil={hasil} />}
+        {section === "hasil" && <HasilSection hasil={hasil} />}
 
         {section === "bank" && view === "paket" && (
           <PaketList
@@ -1135,6 +1140,189 @@ function UserList({ users, adminEmail }: { users: UserRingkas[]; adminEmail: str
 }
 
 /* ===================== Hasil Ujian ===================== */
+function HasilSection({ hasil }: { hasil: HasilRingkas[] }) {
+  const [tab, setTab] = useState<"ranking" | "riwayat">("ranking");
+  return (
+    <>
+      <div className="mb-6 flex gap-2">
+        {(
+          [
+            ["ranking", "Ranking per Paket"],
+            ["riwayat", "Riwayat"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setTab(k)}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+              tab === k
+                ? "bg-navy text-white"
+                : "border border-line bg-surface text-slate hover:bg-muted"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "ranking" ? <RankingView hasil={hasil} /> : <HasilList hasil={hasil} />}
+    </>
+  );
+}
+
+function RankingView({ hasil }: { hasil: HasilRingkas[] }) {
+  const pakets = daftarPaketDariHasil(hasil);
+  const [paketKey, setPaketKey] = useState<string>(() => pakets[0]?.key ?? "");
+  const [mode, setMode] = useState<ModeRanking>("terbaik");
+
+  const ranking = paketKey ? buatRanking(hasil, paketKey, mode) : [];
+  const paketAktif = pakets.find((p) => p.key === paketKey);
+  const unduhUrl = `/admin/hasil/export?paket=${encodeURIComponent(paketKey)}&mode=${mode}`;
+
+  if (pakets.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-line-strong bg-surface p-8 text-center">
+        <p className="text-sm text-slate">
+          Belum ada hasil ujian. Ranking akan muncul setelah ada peserta yang
+          menyelesaikan simulasi.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-heading">
+            Ranking per Paket
+          </h1>
+          <p className="mt-1 text-slate">
+            Peringkat peserta berdasarkan nilai total tiap paket. Hanya admin yang
+            dapat melihat &amp; mengunduh data ini.
+          </p>
+        </div>
+        <a
+          href={unduhUrl}
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-success px-5 text-sm font-semibold text-white shadow-[0_10px_24px_-12px_rgba(4,120,87,0.8)] transition-all hover:brightness-110"
+        >
+          <IconDownload width={18} height={18} />
+          Unduh Excel
+        </a>
+      </div>
+
+      {/* Kontrol: pilih paket + mode */}
+      <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-card)] lg:flex-row lg:items-center lg:justify-between">
+        <label className="flex items-center gap-3 text-sm">
+          <span className="font-semibold text-heading">Paket</span>
+          <select
+            value={paketKey}
+            onChange={(e) => setPaketKey(e.target.value)}
+            className="h-10 rounded-xl border border-line bg-bg px-3 text-sm text-heading outline-none focus:border-brand-600"
+          >
+            {pakets.map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.paketNama} ({p.jumlah} hasil)
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="flex items-center gap-2">
+          {(
+            [
+              ["terbaik", "Nilai terbaik / peserta"],
+              ["semua", "Semua percobaan"],
+            ] as const
+          ).map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                mode === m ? "bg-navy text-white" : "text-slate hover:bg-muted"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="mt-4 text-sm text-slate">
+        <span className="tnum font-semibold text-heading">{ranking.length}</span>{" "}
+        {mode === "terbaik" ? "peserta" : "percobaan"}
+        {paketAktif && <> · paket {paketAktif.paketNama}</>}
+      </p>
+
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-surface shadow-[var(--shadow-card)]">
+        <table className="w-full min-w-[720px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-line bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">Peserta</th>
+              <th className="px-4 py-3 text-right">Nilai</th>
+              {SUBTES_ORDER.map((s) => (
+                <th key={s} className="px-3 py-3 text-right">
+                  {s}
+                </th>
+              ))}
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Tanggal</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {ranking.map((r) => {
+              const juara = r.peringkat <= 3;
+              return (
+                <tr key={r.id} className="hover:bg-muted/20">
+                  <td className="px-4 py-3">
+                    <span
+                      className={`tnum inline-grid h-7 w-7 place-items-center rounded-full text-xs font-bold ${
+                        juara ? "bg-gold-100 text-gold-700" : "bg-muted text-slate"
+                      }`}
+                    >
+                      {r.peringkat}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-semibold text-heading">{r.userNama}</p>
+                    <p className="text-xs text-slate-400">{r.userEmail}</p>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="tnum font-bold text-heading">{r.nilaiTotal}</span>
+                    <span className="tnum text-xs text-slate-400">/{r.nilaiMaksTotal}</span>
+                  </td>
+                  {SUBTES_ORDER.map((s) => {
+                    const sub = r.perSubtes.find((x) => x.subtes === s);
+                    return (
+                      <td key={s} className="tnum px-3 py-3 text-right text-slate">
+                        {sub ? sub.nilai : "—"}
+                      </td>
+                    );
+                  })}
+                  <td className="px-4 py-3">
+                    <Badge tone={r.lulusSemua ? "success" : "danger"}>
+                      {r.lulusSemua ? "Lulus" : "Belum"}
+                    </Badge>
+                  </td>
+                  <td className="tnum px-4 py-3 text-xs text-slate">
+                    {new Date(r.createdAt).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 function HasilList({ hasil }: { hasil: HasilRingkas[] }) {
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);

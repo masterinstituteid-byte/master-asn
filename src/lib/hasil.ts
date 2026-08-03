@@ -33,8 +33,10 @@ export async function simpanHasil(input: SimpanHasilInput): Promise<void> {
 
 export interface HasilRingkas {
   id: string;
+  userId: string;
   userNama: string;
   userEmail: string;
+  paketId: string | null;
   paketNama: string;
   nilaiTotal: number;
   nilaiMaksTotal: number;
@@ -53,8 +55,10 @@ export async function getAllHasil(): Promise<HasilRingkas[]> {
   });
   return rows.map((r) => ({
     id: r.id,
+    userId: r.userId,
     userNama: r.user?.nama ?? "—",
     userEmail: r.user?.email ?? "—",
+    paketId: r.paketId,
     paketNama: r.paketNama,
     nilaiTotal: r.nilaiTotal,
     nilaiMaksTotal: r.nilaiMaksTotal,

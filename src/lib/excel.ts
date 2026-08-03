@@ -1,7 +1,8 @@
 import "server-only";
 import ExcelJS from "exceljs";
-import type { Subtes, Opsi } from "@/lib/skd";
+import { SUBTES_ORDER, SUBTES, formatWaktu, type Subtes, type Opsi } from "@/lib/skd";
 import type { SoalInput } from "@/lib/soal";
+import type { BarisRanking } from "@/lib/ranking";
 
 const HURUF = ["A", "B", "C", "D", "E"] as const;
 const SUBTES_VALID: Subtes[] = ["TWK", "TIU", "TKP"];
@@ -272,4 +273,77 @@ export async function parseSoalExcel(data: ArrayBuffer): Promise<HasilParse> {
   }
 
   return { soal, errors, ringkas };
+}
+
+// ---------------------------------------------------------------------------
+// Ekspor RANKING hasil ujian per paket
+// ---------------------------------------------------------------------------
+
+/** Bangun file Excel berisi ranking hasil satu paket (untuk diunduh admin). */
+export async function buatRankingExcel(
+  ranking: BarisRanking[],
+  paketNama: string,
+): Promise<Uint8Array> {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "MASTER ASN";
+
+  const ws = wb.addWorksheet("Ranking", { views: [{ state: "frozen", ySplit: 1 }] });
+  ws.columns = [
+    { header: "Peringkat", key: "peringkat", width: 10 },
+    { header: "Nama", key: "nama", width: 24 },
+    { header: "Email", key: "email", width: 28 },
+    { header: "Nilai Total", key: "nilai", width: 12 },
+    { header: "Nilai Maks", key: "maks", width: 12 },
+    { header: "Persen", key: "persen", width: 9 },
+    ...SUBTES_ORDER.map((s) => ({ header: s, key: s, width: 8 })),
+    { header: "Status", key: "status", width: 10 },
+    { header: "Jumlah Soal", key: "jumlahSoal", width: 12 },
+    { header: "Waktu", key: "waktu", width: 12 },
+    { header: "Tanggal", key: "tanggal", width: 20 },
+  ];
+  ws.getRow(1).font = { bold: true };
+
+  for (const r of ranking) {
+    const perSub: Record<string, number> = {};
+    for (const s of SUBTES_ORDER) {
+      perSub[s] = r.perSubtes.find((x) => x.subtes === s)?.nilai ?? 0;
+    }
+    ws.addRow({
+      peringkat: r.peringkat,
+      nama: r.userNama,
+      email: r.userEmail,
+      nilai: r.nilaiTotal,
+      maks: r.nilaiMaksTotal,
+      persen:
+        r.nilaiMaksTotal > 0 ? `${Math.round((r.nilaiTotal / r.nilaiMaksTotal) * 100)}%` : "—",
+      ...perSub,
+      status: r.lulusSemua ? "Lulus" : "Belum",
+      jumlahSoal: r.jumlahSoal,
+      waktu: formatWaktu(r.waktuTerpakaiDetik),
+      tanggal: new Date(r.createdAt).toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    });
+  }
+
+  // Judul info di sheet kedua (paket + tgl ekspor + passing grade acuan).
+  const info = wb.addWorksheet("Info");
+  info.columns = [
+    { header: "Keterangan", key: "k", width: 24 },
+    { header: "Nilai", key: "v", width: 40 },
+  ];
+  info.getRow(1).font = { bold: true };
+  info.addRow({ k: "Paket", v: paketNama });
+  info.addRow({ k: "Jumlah peserta", v: ranking.length });
+  info.addRow({ k: "Diekspor pada", v: new Date().toLocaleString("id-ID") });
+  for (const s of SUBTES_ORDER) {
+    info.addRow({ k: `Passing grade ${s}`, v: SUBTES[s].passingGrade });
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  return new Uint8Array(buf);
 }
