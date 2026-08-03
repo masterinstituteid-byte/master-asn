@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createUser } from "@/lib/users";
+import { cekEmailAktif } from "@/lib/email-validation";
 import { signSession, setSessionCookie } from "@/lib/session";
 
 export async function POST(req: Request) {
@@ -11,14 +12,16 @@ export async function POST(req: Request) {
   if (!nama || !email || !password) {
     return NextResponse.json({ error: "Lengkapi semua kolom." }, { status: 400 });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Format email tidak valid." }, { status: 400 });
-  }
   if (password.length < 6) {
     return NextResponse.json(
       { error: "Kata sandi minimal 6 karakter." },
       { status: 400 },
     );
+  }
+  // Validasi email 3 lapis: format, bukan sekali-pakai, domain bisa terima email.
+  const cek = await cekEmailAktif(email);
+  if (!cek.ok) {
+    return NextResponse.json({ error: cek.alasan }, { status: 400 });
   }
 
   try {
