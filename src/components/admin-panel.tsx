@@ -603,7 +603,7 @@ function UploadModal({
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [parsed, setParsed] = useState<HasilParse | null>(null);
-  const [mode, setMode] = useState<"ganti" | "tambah">("ganti");
+  const [mode, setMode] = useState<"ganti" | "tambah">("tambah");
   const [importing, setImporting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -716,7 +716,7 @@ function UploadModal({
               <div>
                 <p className="mb-2 text-sm font-semibold text-heading">Cara simpan</p>
                 <div className="flex gap-2">
-                  {([["ganti", "Ganti semua soal paket"], ["tambah", "Tambahkan ke yang ada"]] as const).map(([m, label]) => (
+                  {([["tambah", "Tambahkan ke yang ada"], ["ganti", "Ganti semua soal paket"]] as const).map(([m, label]) => (
                     <button
                       key={m}
                       onClick={() => setMode(m)}
@@ -728,6 +728,16 @@ function UploadModal({
                     </button>
                   ))}
                 </div>
+                {mode === "ganti" && (
+                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-danger-100 bg-danger-50 p-3 text-xs text-danger">
+                    <IconWarning width={15} height={15} className="mt-0.5 shrink-0" />
+                    <span>
+                      <b>Hati-hati:</b> mode ini akan <b>menghapus SEMUA soal</b> di paket ini
+                      (termasuk soal figural/gambar yang diinput manual), lalu menggantinya dengan
+                      isi Excel. Pilih <b>&quot;Tambahkan&quot;</b> bila ingin soal lama tetap ada.
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 

@@ -158,6 +158,17 @@ export function SimulasiRunner({
     if (soal) setPending(answers[soal.id] ?? null);
   }, [index, answers, soal]);
 
+  // Peringatan browser bila menutup/refresh tab saat ujian masih berjalan.
+  useEffect(() => {
+    if (submitting || total === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [submitting, total]);
+
   // Bila belum ada soal sama sekali (bank soal kosong).
   if (total === 0 || !soal) {
     return (
