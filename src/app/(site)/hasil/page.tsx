@@ -27,7 +27,7 @@ import {
   type Soal,
   type Subtes,
 } from "@/lib/skd";
-import { TeksSoal } from "@/components/teks-soal";
+import { TeksSoal, TeksInline } from "@/components/teks-soal";
 import { getPeringkatAction } from "@/app/simulasi/actions";
 import type { Peringkat } from "@/lib/hasil";
 
@@ -379,7 +379,7 @@ function PembahasanItem({
                 >
                   <span className="font-bold text-slate-400">{o.id}</span>
                   <span className="flex-1 text-slate">
-                    {o.teks}
+                    <TeksInline text={o.teks} />
                     {o.gambar && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img

@@ -21,7 +21,7 @@ import {
   IconWarning,
 } from "@/components/icons";
 import { Button, Container, ButtonLink } from "@/components/ui";
-import { TeksSoal } from "@/components/teks-soal";
+import { TeksSoal, TeksInline } from "@/components/teks-soal";
 import { simpanHasilAction } from "@/app/simulasi/actions";
 
 // Progres ujian yang disimpan agar bisa dilanjutkan setelah refresh / jaringan putus.
@@ -325,7 +325,7 @@ export function SimulasiRunner({
                           {o.id}
                         </span>
                         <span className="flex-1">
-                          {o.teks}
+                          <TeksInline text={o.teks} />
                           {o.gambar && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img

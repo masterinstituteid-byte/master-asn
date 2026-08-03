@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { SUBTES_ORDER, type Subtes, type Soal } from "@/lib/skd";
 import { Card, Badge } from "@/components/ui";
-import { TeksSoal } from "@/components/teks-soal";
+import { TeksSoal, TeksInline } from "@/components/teks-soal";
 import { IconEye, IconCheck, IconFilter } from "@/components/icons";
 
 type SubtesFilter = "ALL" | Subtes;
@@ -159,7 +159,7 @@ function SoalCard({ soal, nomor }: { soal: Soal; nomor: number }) {
                 {o.id}
               </span>
               <span className="flex-1 text-slate">
-                {o.teks}
+                <TeksInline text={o.teks} />
                 {o.gambar && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

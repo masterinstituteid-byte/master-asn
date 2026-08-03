@@ -40,6 +40,7 @@ import type { TestimoniRingkas, TestimoniInput } from "@/lib/testimoni";
 import type { PaketHargaRingkas, PaketHargaInput } from "@/lib/paket-harga";
 import { formatRupiah } from "@/lib/format";
 import { siapkanGambar } from "@/lib/gambar-client";
+import { TeksSoal } from "@/components/teks-soal";
 import {
   buatRanking,
   daftarPaketDariHasil,
@@ -743,6 +744,138 @@ function UploadModal({
 }
 
 /* ===================== Unggah Gambar (untuk soal figural) ===================== */
+/* Textarea + toolbar rumus (KaTeX) & sisip tabel + pratinjau langsung. */
+function RichTextArea({
+  value,
+  onChange,
+  rows = 4,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  placeholder?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const [baris, setBaris] = useState(2);
+  const [kolom, setKolom] = useState(3);
+  const [tabelOpen, setTabelOpen] = useState(false);
+
+  const sisip = (snippet: string, taruhDiDalam = false) => {
+    const ta = ref.current;
+    if (!ta) {
+      onChange(value + snippet);
+      return;
+    }
+    const start = ta.selectionStart ?? value.length;
+    const end = ta.selectionEnd ?? value.length;
+    const next = value.slice(0, start) + snippet + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const rel = taruhDiDalam ? snippet.indexOf("{}") : -1;
+      const pos = rel >= 0 ? start + rel + 1 : start + snippet.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  };
+
+  const sisipTabel = () => {
+    const b = Math.max(1, Math.min(12, baris));
+    const k = Math.max(1, Math.min(8, kolom));
+    const header = Array.from({ length: k }, (_, i) => `Judul ${i + 1}`).join(" | ");
+    const isi = Array.from({ length: b }, () =>
+      Array.from({ length: k }, () => "  ").join(" | "),
+    );
+    sisip("\n" + [header, ...isi].join("\n") + "\n");
+    setTabelOpen(false);
+  };
+
+  const tombol: [string, string, boolean][] = [
+    ["Pecahan", "$\\frac{}{}$", true],
+    ["Pangkat x²", "$x^{}$", true],
+    ["Akar √", "$\\sqrt{}$", true],
+    ["×", "×", false],
+    ["÷", "÷", false],
+    ["≤", "≤", false],
+    ["≥", "≥", false],
+    ["π", "π", false],
+  ];
+
+  const adaPreview = value.includes("$") || value.includes("|");
+
+  return (
+    <div>
+      <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+        {tombol.map(([label, snip, dalam]) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => sisip(snip, dalam)}
+            className="rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-medium text-slate hover:bg-muted hover:text-heading"
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setTabelOpen((v) => !v)}
+          className="rounded-lg border border-line bg-surface px-2.5 py-1 text-xs font-medium text-slate hover:bg-muted hover:text-heading"
+        >
+          + Tabel
+        </button>
+      </div>
+
+      {tabelOpen && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-muted/40 p-2 text-xs">
+          <span className="text-slate">Baris</span>
+          <input
+            type="number"
+            min={1}
+            max={12}
+            value={baris}
+            onChange={(e) => setBaris(+e.target.value)}
+            className="w-16 rounded border border-line bg-bg px-2 py-1"
+          />
+          <span className="text-slate">Kolom</span>
+          <input
+            type="number"
+            min={1}
+            max={8}
+            value={kolom}
+            onChange={(e) => setKolom(+e.target.value)}
+            className="w-16 rounded border border-line bg-bg px-2 py-1"
+          />
+          <button
+            type="button"
+            onClick={sisipTabel}
+            className="rounded-lg bg-navy px-3 py-1 font-semibold text-white"
+          >
+            Sisipkan
+          </button>
+        </div>
+      )}
+
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className={inputCls}
+      />
+
+      {adaPreview && (
+        <div className="mt-2 rounded-xl border border-line bg-muted/20 p-3">
+          <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-400">
+            Pratinjau
+          </p>
+          <TeksSoal text={value} className="text-sm leading-relaxed text-heading" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ImageUpload({
   value,
   onChange,
@@ -972,12 +1105,16 @@ function SoalFormView({
         </div>
 
         <Field label="Pertanyaan">
-          <textarea value={form.pertanyaan} onChange={(e) => set({ pertanyaan: e.target.value })} rows={4} placeholder="Tulis pertanyaan… (boleh kosong bila soal hanya gambar)" className={inputCls} />
+          <RichTextArea
+            value={form.pertanyaan}
+            onChange={(v) => set({ pertanyaan: v })}
+            rows={4}
+            placeholder="Tulis pertanyaan… (boleh kosong bila soal hanya gambar)"
+          />
           <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
-            Pecahan cukup diketik biasa (mis. <code className="rounded bg-muted px-1">2/3</code>, ½, √, x²).
-            Untuk <b>tabel</b>, pisahkan kolom dengan tanda <code className="rounded bg-muted px-1">|</code> — baris pertama jadi judul kolom. Contoh:
-            <br />
-            <code className="mt-1 block whitespace-pre rounded bg-muted px-2 py-1 text-[0.7rem] text-slate">{"Tahun | Produksi\n2023 | 120\n2024 | 150"}</code>
+            <b>Rumus:</b> klik tombol <b>Pecahan / Pangkat / Akar</b> lalu isi angkanya — hasilnya
+            tampil di <b>Pratinjau</b>. <b>Tabel:</b> klik <b>+ Tabel</b>, pilih baris & kolom,
+            lalu isi selnya.
           </p>
         </Field>
 
@@ -1030,7 +1167,12 @@ function SoalFormView({
         </div>
 
         <Field label="Pembahasan">
-          <textarea value={form.pembahasan} onChange={(e) => set({ pembahasan: e.target.value })} rows={3} placeholder="Penjelasan jawaban…" className={inputCls} />
+          <RichTextArea
+            value={form.pembahasan}
+            onChange={(v) => set({ pembahasan: v })}
+            rows={3}
+            placeholder="Penjelasan jawaban…"
+          />
         </Field>
 
         {error && (

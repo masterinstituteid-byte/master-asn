@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Poppins } from "next/font/google";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 // Poppins — font judul (display) untuk seluruh situs.
