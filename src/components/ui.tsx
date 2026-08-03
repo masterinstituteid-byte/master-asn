@@ -135,7 +135,7 @@ export function SectionHeading({
       className={`${align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"} ${className}`}
     >
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h2 className="mt-4 text-3xl font-bold leading-tight text-heading sm:text-4xl text-balance">
+      <h2 className="mt-4 text-3xl font-extrabold leading-tight text-heading sm:text-4xl text-balance">
         {title}
       </h2>
       {desc && <p className="mt-4 text-lg leading-relaxed text-slate">{desc}</p>}

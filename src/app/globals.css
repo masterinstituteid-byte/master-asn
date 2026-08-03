@@ -54,7 +54,8 @@
   /* Fonts */
   --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
-  --font-poppins: var(--font-poppins-face), ui-sans-serif, system-ui, sans-serif;
+  /* Alias — hero memakai kelas font-poppins; kini font display = Poppins. */
+  --font-poppins: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
 
   /* Radii */
   --radius-xl: 1rem;
