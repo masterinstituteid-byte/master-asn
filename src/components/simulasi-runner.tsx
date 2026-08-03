@@ -299,7 +299,7 @@ export function SimulasiRunner({
                   />
                 )}
 
-                <div className="mt-6 space-y-3" role="radiogroup" aria-label="Pilihan jawaban">
+                <div className="mt-4 space-y-1.5" role="radiogroup" aria-label="Pilihan jawaban">
                   {soal.opsi.map((o) => {
                     const selected = pending === o.id;
                     return (
@@ -309,14 +309,14 @@ export function SimulasiRunner({
                         role="radio"
                         aria-checked={selected}
                         onClick={() => pilih(o.id)}
-                        className={`flex w-full items-start gap-3.5 rounded-2xl border px-4 py-3.5 text-left text-[0.95rem] transition-all duration-150 ${
+                        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-[0.9rem] leading-snug transition-all duration-150 ${
                           selected
                             ? "border-brand-600 bg-brand-50 font-semibold text-brand-700 shadow-[0_0_0_1px_var(--color-brand-600)]"
                             : "border-line bg-surface text-slate hover:border-line-strong hover:bg-muted/40"
                         }`}
                       >
                         <span
-                          className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm font-bold ${
+                          className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold ${
                             selected
                               ? "border-brand-600 bg-brand-600 text-white"
                               : "border-line-strong text-slate-400"
@@ -335,7 +335,7 @@ export function SimulasiRunner({
                             />
                           )}
                         </span>
-                        {selected && <IconCheck width={18} height={18} className="shrink-0 self-start text-brand-600" />}
+                        {selected && <IconCheck width={16} height={16} className="shrink-0 text-brand-600" />}
                       </button>
                     );
                   })}
