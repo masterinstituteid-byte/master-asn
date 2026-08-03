@@ -148,6 +148,16 @@ export async function getPaketSimulasi(paketId?: string): Promise<Soal[]> {
 
 // ---- Mutasi ----
 export async function createSoal(input: SoalInput): Promise<Soal> {
+  // Soal baru DILANJUTKAN di belakang soal yang sudah ada (nomor terakhir + 1),
+  // agar soal tambah-manual muncul setelah soal dari Excel, bukan di paling atas.
+  let nomor = input.nomor;
+  if (nomor === undefined) {
+    const agg = await prisma.soal.aggregate({
+      where: { paketId: input.paketId ?? null },
+      _max: { nomor: true },
+    });
+    nomor = (agg._max.nomor ?? 0) + 1;
+  }
   const row = await prisma.soal.create({
     data: {
       subtes: input.subtes,
@@ -158,7 +168,7 @@ export async function createSoal(input: SoalInput): Promise<Soal> {
       kunci: input.kunci ?? null,
       pembahasan: input.pembahasan,
       tingkat: input.tingkat,
-      nomor: input.nomor ?? 0,
+      nomor,
       paketId: input.paketId ?? null,
     },
   });
