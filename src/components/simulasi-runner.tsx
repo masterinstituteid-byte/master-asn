@@ -63,6 +63,7 @@ export function SimulasiRunner({
   const [answers, setAnswers] = useState<Record<string, string | null>>({});
   const [timeLeft, setTimeLeft] = useState(TRYOUT_DURASI_DETIK);
   const [siapSimpan, setSiapSimpan] = useState(false);
+  const [mulai, setMulai] = useState(false); // false = tampil petunjuk dulu
 
   // Pulihkan progres dari localStorage sekali setelah mount (khusus klien).
   useEffect(() => {
@@ -71,6 +72,7 @@ export function SimulasiRunner({
       setDeadline(r.deadline);
       if (typeof r.index === "number") setIndex(Math.min(r.index, Math.max(0, total - 1)));
       if (r.answers) setAnswers(r.answers);
+      setMulai(true); // ujian sedang berjalan — lanjutkan, lewati petunjuk
     }
     setSiapSimpan(true);
   }, [storageKey, total]);
@@ -122,8 +124,9 @@ export function SimulasiRunner({
   // Simpan progres otomatis (jawaban, posisi, deadline) agar ujian bisa dilanjutkan
   // setelah refresh / jaringan putus / ganti koneksi.
   useEffect(() => {
-    // Jangan menyimpan sebelum pemulihan progres selesai (agar tidak menimpa data lama).
-    if (!siapSimpan || submitting || total === 0) return;
+    // Jangan menyimpan sebelum pemulihan progres selesai (agar tidak menimpa data lama)
+    // atau sebelum ujian benar-benar dimulai (masih di layar petunjuk).
+    if (!siapSimpan || !mulai || submitting || total === 0) return;
     try {
       window.localStorage.setItem(
         storageKey,
@@ -132,11 +135,11 @@ export function SimulasiRunner({
     } catch {
       /* ignore */
     }
-  }, [answers, index, deadline, siapSimpan, submitting, total, storageKey]);
+  }, [answers, index, deadline, siapSimpan, mulai, submitting, total, storageKey]);
 
   // Countdown berbasis jam nyata — tetap akurat meski tab tidak aktif / di-background.
   useEffect(() => {
-    if (submitting) return;
+    if (submitting || !mulai) return;
     const tick = () => {
       const sisa = Math.max(0, Math.round((deadline - Date.now()) / 1000));
       setTimeLeft(sisa);
@@ -153,23 +156,24 @@ export function SimulasiRunner({
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [submitting, deadline, handleSubmit]);
+  }, [submitting, mulai, deadline, handleSubmit]);
 
   // Saat pindah soal, tampilkan kembali jawaban yang SUDAH tersimpan (jika ada).
   useEffect(() => {
     if (soal) setPending(answers[soal.id] ?? null);
   }, [index, answers, soal]);
 
-  // Peringatan browser bila menutup/refresh tab saat ujian masih berjalan.
+  // Peringatan browser bila menutup/refresh tab saat ujian masih berjalan
+  // (hanya setelah ujian dimulai, tidak di layar petunjuk).
   useEffect(() => {
-    if (submitting || total === 0) return;
+    if (submitting || !mulai || total === 0) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [submitting, total]);
+  }, [submitting, mulai, total]);
 
   // Bila belum ada soal sama sekali (bank soal kosong).
   if (total === 0 || !soal) {
@@ -190,6 +194,99 @@ export function SimulasiRunner({
           </ButtonLink>
         </div>
       </Container>
+    );
+  }
+
+  // ===== Layar petunjuk (pengingat) sebelum ujian dimulai =====
+  // Timer BARU berjalan saat "Mulai Ujian" diklik.
+  const mulaiUjian = () => {
+    setDeadline(Date.now() + TRYOUT_DURASI_DETIK * 1000);
+    setTimeLeft(TRYOUT_DURASI_DETIK);
+    setMulai(true);
+  };
+
+  if (!mulai) {
+    // Tunggu pengecekan progres selesai agar tidak berkedip saat melanjutkan ujian.
+    if (!siapSimpan) {
+      return (
+        <div className="grid min-h-dvh place-items-center bg-bg">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-brand-600" />
+        </div>
+      );
+    }
+    const menit = Math.round(TRYOUT_DURASI_DETIK / 60);
+    return (
+      <div className="grid min-h-dvh place-items-center bg-bg px-4 py-10">
+        <div className="w-full max-w-lg rounded-3xl border border-line bg-surface p-6 shadow-[var(--shadow-card)] sm:p-8">
+          <div className="flex justify-center">
+            <Logo />
+          </div>
+          <div className="mt-6 text-center">
+            <span className="inline-flex rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+              Petunjuk Simulasi
+            </span>
+            <h1 className="mt-3 text-2xl font-extrabold text-heading">{paketNama}</h1>
+            <p className="mt-1.5 text-sm text-slate">
+              Baca petunjuk berikut. Waktu <b className="text-heading">baru berjalan</b>{" "}
+              setelah kamu menekan &quot;Mulai Ujian&quot;.
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-muted/50 p-4 text-center">
+              <p className="tnum text-2xl font-extrabold text-heading">{total}</p>
+              <p className="text-xs text-slate">soal</p>
+            </div>
+            <div className="rounded-2xl bg-muted/50 p-4 text-center">
+              <p className="tnum text-2xl font-extrabold text-heading">{menit}</p>
+              <p className="text-xs text-slate">menit</p>
+            </div>
+          </div>
+
+          <ul className="mt-6 space-y-3 text-sm text-slate">
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+                <IconClock width={14} height={14} />
+              </span>
+              <span>
+                Waktu {menit} menit berjalan terus meski kamu berpindah atau menutup tab —
+                pastikan waktumu cukup.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+                <IconCheck width={14} height={14} />
+              </span>
+              <span>
+                Jawaban tersimpan otomatis. Bila jaringan putus, kamu bisa melanjutkan dari posisi
+                terakhir.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+                <IconGrid width={14} height={14} />
+              </span>
+              <span>Kamu bebas melewati soal dan kembali lagi lewat navigasi nomor.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+                <IconWarning width={14} height={14} />
+              </span>
+              <span>Setelah dikumpulkan, jawaban tidak dapat diubah.</span>
+            </li>
+          </ul>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse">
+            <Button size="lg" variant="primary" className="w-full sm:flex-1" onClick={mulaiUjian}>
+              Mulai Ujian
+              <IconArrowRight width={18} height={18} />
+            </Button>
+            <ButtonLink href="/tryout" size="lg" variant="outline" className="w-full sm:flex-1">
+              Kembali
+            </ButtonLink>
+          </div>
+        </div>
+      </div>
     );
   }
 
