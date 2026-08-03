@@ -6,7 +6,7 @@ import { IconChevronDown } from "@/components/icons";
 const ITEMS = [
   {
     q: "Apakah simulasinya mirip CAT BKN yang asli?",
-    a: "Ya. Sistem simulasi kami meniru pengalaman CAT: timer mundur, navigasi antar soal, penanda ragu-ragu, auto-submit saat waktu habis, hingga penilaian per subtes berbasis passing grade resmi.",
+    a: "Ya. Sistem simulasi kami meniru pengalaman CAT: timer mundur, navigasi antar soal, auto-submit saat waktu habis, hingga penilaian per subtes berbasis passing grade resmi.",
   },
   {
     q: "Apa saja subtes yang tersedia?",
