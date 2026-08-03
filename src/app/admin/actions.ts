@@ -17,6 +17,8 @@ import {
   deletePaket,
 } from "@/lib/paket";
 import { parseSoalExcel, type HasilParse } from "@/lib/excel";
+import { deleteUser, getUserEmail } from "@/lib/users";
+import { deleteHasil } from "@/lib/hasil";
 import { simpanGambar, MIME_GAMBAR } from "@/lib/gambar";
 import { createModul, deleteModul } from "@/lib/modul";
 import { setStatusTransaksi, type StatusTransaksi } from "@/lib/transaksi";
@@ -228,5 +230,22 @@ export async function updatePaketHargaAction(id: string, input: PaketHargaInput)
 export async function deletePaketHargaAction(id: string) {
   await assertAdmin();
   await deletePaketHarga(id);
+  revalidate();
+}
+
+// ---- Pengguna & Hasil Ujian ----
+export async function deleteUserAction(id: string) {
+  await assertAdmin();
+  const email = await getUserEmail(id);
+  if (email && isAdminEmail(email)) {
+    throw new Error("Akun admin tidak dapat dihapus.");
+  }
+  await deleteUser(id);
+  revalidate();
+}
+
+export async function deleteHasilAction(id: string) {
+  await assertAdmin();
+  await deleteHasil(id);
   revalidate();
 }

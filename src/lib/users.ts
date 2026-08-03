@@ -108,3 +108,14 @@ export async function getAllUsers(): Promise<UserRingkas[]> {
 export async function countUsers(): Promise<number> {
   return prisma.user.count();
 }
+
+/** Email satu pengguna berdasarkan id (untuk pengecekan admin). */
+export async function getUserEmail(id: string): Promise<string | null> {
+  const u = await prisma.user.findUnique({ where: { id }, select: { email: true } });
+  return u?.email ?? null;
+}
+
+/** Hapus pengguna beserta seluruh data terkait (hasil, transaksi, akses — cascade). */
+export async function deleteUser(id: string): Promise<void> {
+  await prisma.user.delete({ where: { id } });
+}

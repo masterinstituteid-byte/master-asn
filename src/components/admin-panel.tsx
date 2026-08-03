@@ -67,6 +67,8 @@ import {
   updatePaketHargaAction,
   deletePaketHargaAction,
   uploadGambarAction,
+  deleteUserAction,
+  deleteHasilAction,
 } from "@/app/admin/actions";
 
 const HURUF = ["A", "B", "C", "D", "E"];
@@ -1225,7 +1227,17 @@ function SoalFormView({
 
 /* ===================== Daftar Pengguna ===================== */
 function UserList({ users, adminEmail }: { users: UserRingkas[]; adminEmail: string }) {
+  const router = useRouter();
   const [q, setQ] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  const hapus = (u: UserRingkas) => {
+    if (!confirm(`Hapus pengguna "${u.nama}" (${u.email})? Semua hasil ujiannya juga akan terhapus. Tindakan ini tidak bisa dibatalkan.`)) return;
+    startTransition(async () => {
+      await deleteUserAction(u.id);
+      router.refresh();
+    });
+  };
 
   const key = q.trim().toLowerCase();
   const list = key
@@ -1268,11 +1280,12 @@ function UserList({ users, adminEmail }: { users: UserRingkas[]; adminEmail: str
       ) : (
         <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-card)]">
           {/* Header (desktop) */}
-          <div className="hidden grid-cols-[1.4fr_1.6fr_0.8fr_0.8fr] gap-4 border-b border-line bg-muted/40 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400 sm:grid">
+          <div className="hidden grid-cols-[1.4fr_1.6fr_0.7fr_0.7fr_auto] gap-4 border-b border-line bg-muted/40 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400 sm:grid">
             <span>Nama</span>
             <span>Email</span>
             <span>Metode</span>
             <span>Terdaftar</span>
+            <span />
           </div>
           <div className="divide-y divide-line">
             {list.map((u) => {
@@ -1280,7 +1293,7 @@ function UserList({ users, adminEmail }: { users: UserRingkas[]; adminEmail: str
               return (
                 <div
                   key={u.id}
-                  className="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[1.4fr_1.6fr_0.8fr_0.8fr] sm:items-center sm:gap-4"
+                  className="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[1.4fr_1.6fr_0.7fr_0.7fr_auto] sm:items-center sm:gap-4"
                 >
                   <div className="flex items-center gap-2">
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-700">
@@ -1296,6 +1309,20 @@ function UserList({ users, adminEmail }: { users: UserRingkas[]; adminEmail: str
                     </Badge>
                   </span>
                   <span className="tnum text-sm text-slate">{fmtTanggal(u.createdAt)}</span>
+                  <span className="sm:justify-self-end">
+                    {isAdmin ? (
+                      <span className="text-xs text-slate-400">—</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => hapus(u)}
+                        disabled={pending}
+                        className="rounded-lg border border-danger-100 bg-danger-50 px-3 py-1.5 text-sm font-medium text-danger hover:brightness-95 disabled:opacity-50"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </span>
                 </div>
               );
             })}
@@ -1494,8 +1521,18 @@ function RankingView({ hasil }: { hasil: HasilRingkas[] }) {
 }
 
 function HasilList({ hasil }: { hasil: HasilRingkas[] }) {
+  const router = useRouter();
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const hapus = (h: HasilRingkas) => {
+    if (!confirm(`Hapus hasil ujian ${h.userNama} — paket "${h.paketNama}" (nilai ${h.nilaiTotal})?`)) return;
+    startTransition(async () => {
+      await deleteHasilAction(h.id);
+      router.refresh();
+    });
+  };
 
   const key = q.trim().toLowerCase();
   const list = key
@@ -1621,9 +1658,19 @@ function HasilList({ hasil }: { hasil: HasilRingkas[] }) {
                           </div>
                         ))}
                       </div>
-                      <p className="mt-3 text-xs text-slate-400">
-                        {h.jumlahSoal} soal · waktu terpakai {formatWaktu(h.waktuTerpakaiDetik)}
-                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="text-xs text-slate-400">
+                          {h.jumlahSoal} soal · waktu terpakai {formatWaktu(h.waktuTerpakaiDetik)}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => hapus(h)}
+                          disabled={pending}
+                          className="shrink-0 rounded-lg border border-danger-100 bg-danger-50 px-3 py-1.5 text-sm font-medium text-danger hover:brightness-95 disabled:opacity-50"
+                        >
+                          Hapus hasil ini
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

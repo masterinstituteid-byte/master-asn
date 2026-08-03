@@ -74,6 +74,11 @@ export async function countHasil(): Promise<number> {
   return prisma.hasilUjian.count();
 }
 
+/** Hapus satu hasil ujian. */
+export async function deleteHasil(id: string): Promise<void> {
+  await prisma.hasilUjian.delete({ where: { id } });
+}
+
 // =========================================================
 // Analitik pengguna & peringkat
 // =========================================================
