@@ -18,6 +18,7 @@ import {
   IconBook,
   IconStar,
   IconQuote,
+  IconEye,
 } from "@/components/icons";
 import { Button, Badge } from "@/components/ui";
 import {
@@ -1049,6 +1050,7 @@ function SoalFormView({
 }) {
   const [form, setForm] = useState<FormState>(editing ? formFromSoal(editing) : emptyForm());
   const [error, setError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [pending, startTransition] = useTransition();
   const isTKP = form.subtes === "TKP";
 
@@ -1217,6 +1219,24 @@ function SoalFormView({
           />
         </Field>
 
+        <div className="border-t border-line pt-4">
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
+            aria-expanded={showPreview}
+          >
+            <IconEye width={16} height={16} />
+            {showPreview ? "Sembunyikan pratinjau soal" : "Lihat pratinjau soal"}
+          </button>
+          {showPreview && (
+            <div className="mt-3">
+              <p className="mb-2 text-xs text-slate-400">Tampilan soal seperti yang dilihat peserta:</p>
+              <SoalPreview form={form} />
+            </div>
+          )}
+        </div>
+
         {error && (
           <div className="flex items-start gap-2.5 rounded-xl border border-danger-100 bg-danger-50 p-3 text-sm text-danger">
             <IconWarning width={16} height={16} className="mt-0.5 shrink-0" /> {error}
@@ -1231,6 +1251,104 @@ function SoalFormView({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* Pratinjau soal utuh — render sesuai tampilan simulasi (pakai data form live). */
+function SoalPreview({ form }: { form: FormState }) {
+  const isTKP = form.subtes === "TKP";
+  const cfg = SUBTES[form.subtes];
+  const opsi = HURUF.map((h, i) => ({
+    id: h,
+    teks: form.opsiTeks[i],
+    gambar: form.opsiGambar[i],
+    poin: form.opsiPoin[i],
+  })).filter((o) => o.teks.trim() || o.gambar);
+
+  const kosong = !form.pertanyaan.trim() && !form.gambar && opsi.length === 0;
+  if (kosong) {
+    return (
+      <div className="rounded-2xl border border-dashed border-line-strong bg-surface p-6 text-center text-sm text-slate-400">
+        Isi pertanyaan dan opsi jawaban untuk melihat pratinjau.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-card)] sm:p-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+          {form.subtes} · {cfg.nama}
+        </span>
+        {form.materi.trim() && (
+          <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-slate">{form.materi}</span>
+        )}
+      </div>
+
+      <TeksSoal
+        text={form.pertanyaan}
+        className="mt-3 text-[0.95rem] font-medium leading-relaxed text-heading"
+      />
+      {form.gambar && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/gambar/${form.gambar}`}
+          alt="Gambar soal"
+          className="mt-3 max-h-64 w-auto max-w-full rounded-xl border border-line bg-white object-contain"
+        />
+      )}
+
+      <div className="mt-4 space-y-2">
+        {opsi.length === 0 ? (
+          <p className="text-sm text-slate-400">Belum ada opsi jawaban.</p>
+        ) : (
+          opsi.map((o) => {
+            const kunci = !isTKP && form.kunci === o.id;
+            return (
+              <div
+                key={o.id}
+                className={`flex items-start gap-3 rounded-xl border px-3.5 py-2.5 text-sm ${
+                  kunci ? "border-success/40 bg-success-50/60" : "border-line"
+                }`}
+              >
+                <span
+                  className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                    kunci ? "bg-success text-white" : "border border-line-strong text-slate-400"
+                  }`}
+                >
+                  {o.id}
+                </span>
+                <span className="flex-1 text-slate">
+                  <TeksInline text={o.teks} />
+                  {o.gambar && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`/gambar/${o.gambar}`}
+                      alt={`Pilihan ${o.id}`}
+                      className={`${o.teks ? "mt-2" : ""} max-h-32 w-auto max-w-full rounded-lg border border-line bg-white object-contain`}
+                    />
+                  )}
+                </span>
+                {isTKP ? (
+                  <span className="tnum text-xs font-semibold text-slate-400">{o.poin} poin</span>
+                ) : (
+                  kunci && <Badge tone="success">Kunci</Badge>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {form.pembahasan.trim() && (
+        <div className="mt-4 rounded-xl bg-brand-50/50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+            Pembahasan{!isTKP && form.kunci ? ` · Kunci ${form.kunci}` : ""}
+          </p>
+          <TeksSoal text={form.pembahasan} className="mt-1 text-sm leading-relaxed text-slate" />
+        </div>
+      )}
     </div>
   );
 }
