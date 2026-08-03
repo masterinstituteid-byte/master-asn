@@ -114,7 +114,9 @@ export function SimulasiRunner({
     } catch {
       /* ignore */
     }
-    router.push("/hasil");
+    // replace (bukan push) agar /simulasi keluar dari riwayat — tombol Back
+    // dari halaman hasil tidak kembali ke ujian yang sudah selesai.
+    router.replace("/hasil");
   }, [soalList, answers, deadline, router, paketId, paketNama, storageKey]);
 
   // Simpan progres otomatis (jawaban, posisi, deadline) agar ujian bisa dilanjutkan
