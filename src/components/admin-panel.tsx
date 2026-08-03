@@ -1261,12 +1261,12 @@ function RankingView({ hasil }: { hasil: HasilRingkas[] }) {
             <tr className="border-b border-line bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
               <th className="px-4 py-3">#</th>
               <th className="px-4 py-3">Peserta</th>
-              <th className="px-4 py-3 text-right">Nilai</th>
               {SUBTES_ORDER.map((s) => (
                 <th key={s} className="px-3 py-3 text-right">
                   {s}
                 </th>
               ))}
+              <th className="px-4 py-3 text-right">Nilai</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Tanggal</th>
             </tr>
@@ -1288,9 +1288,6 @@ function RankingView({ hasil }: { hasil: HasilRingkas[] }) {
                   <td className="px-4 py-3">
                     <p className="font-semibold text-heading">{r.userNama}</p>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="tnum font-bold text-heading">{r.nilaiTotal}</span>
-                  </td>
                   {SUBTES_ORDER.map((s) => {
                     const sub = r.perSubtes.find((x) => x.subtes === s);
                     return (
@@ -1299,6 +1296,9 @@ function RankingView({ hasil }: { hasil: HasilRingkas[] }) {
                       </td>
                     );
                   })}
+                  <td className="px-4 py-3 text-right">
+                    <span className="tnum font-bold text-heading">{r.nilaiTotal}</span>
+                  </td>
                   <td className="px-4 py-3">
                     <Badge tone={r.lulusSemua ? "success" : "danger"}>
                       {r.lulusSemua ? "Lulus" : "Belum"}
