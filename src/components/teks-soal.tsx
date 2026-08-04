@@ -52,6 +52,29 @@ export function TeksInline({ text }: { text?: string | null }) {
   return <>{withMath(text)}</>;
 }
 
+/**
+ * Versi teks polos (tanpa kode LaTeX) untuk pratinjau/cuplikan satu baris.
+ * Mengubah $...$ jadi teks biasa: \frac{a}{b} -> a/b, dll. — tidak dirender KaTeX.
+ */
+export function teksPolos(text?: string | null): string {
+  if (!text) return "";
+  return text
+    .replace(/\$\$?([\s\S]*?)\$\$?/g, (_, inner) => inner) // buang delimiter $ / $$
+    .replace(/\\d?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "$1/$2")
+    .replace(/\\sqrt\s*\{([^{}]*)\}/g, "√$1")
+    .replace(/\^\s*\{([^{}]*)\}/g, "^$1")
+    .replace(/\\times/g, "×")
+    .replace(/\\div/g, "÷")
+    .replace(/\\le\b/g, "≤")
+    .replace(/\\ge\b/g, "≥")
+    .replace(/\\pi\b/g, "π")
+    .replace(/\\[a-zA-Z]+/g, "") // sisa perintah LaTeX
+    .replace(/[{}\\]/g, "") // sisa kurung/backslash
+    .replace(/\|/g, " ") // pipe tabel -> spasi (untuk cuplikan)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // -------- Tabel pipe-delimited --------
 function splitRow(line: string): string[] {
   let s = line.trim();

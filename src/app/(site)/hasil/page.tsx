@@ -27,7 +27,7 @@ import {
   type Soal,
   type Subtes,
 } from "@/lib/skd";
-import { TeksSoal, TeksInline } from "@/components/teks-soal";
+import { TeksSoal, TeksInline, teksPolos } from "@/components/teks-soal";
 import { getPeringkatAction } from "@/app/simulasi/actions";
 import type { Peringkat } from "@/lib/hasil";
 
@@ -324,7 +324,7 @@ function PembahasanItem({
             <span>·</span>
             <span>{soal.subtes} — {soal.materi}</span>
           </p>
-          <p className="mt-0.5 truncate text-sm font-medium text-heading">{soal.pertanyaan}</p>
+          <p className="mt-0.5 truncate text-sm font-medium text-heading">{teksPolos(soal.pertanyaan)}</p>
         </div>
         <span className="hidden shrink-0 sm:block">
           {isTKP ? (
