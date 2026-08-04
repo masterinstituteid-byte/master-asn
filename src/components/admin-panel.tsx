@@ -41,7 +41,7 @@ import type { TestimoniRingkas, TestimoniInput } from "@/lib/testimoni";
 import type { PaketHargaRingkas, PaketHargaInput } from "@/lib/paket-harga";
 import { formatRupiah } from "@/lib/format";
 import { siapkanGambar } from "@/lib/gambar-client";
-import { TeksSoal, TeksInline } from "@/components/teks-soal";
+import { TeksSoal, TeksInline, teksPolos } from "@/components/teks-soal";
 import {
   buatRanking,
   daftarPaketDariHasil,
@@ -219,6 +219,22 @@ export function AdminPanel({
             onDeleteSoal={(id) =>
               startTransition(async () => { await deleteSoalAction(id); router.refresh(); })
             }
+            onDuplicateSoal={(s) =>
+              startTransition(async () => {
+                await createSoalAction({
+                  subtes: s.subtes,
+                  materi: s.materi ? `${s.materi} (salinan)` : "(salinan)",
+                  tingkat: s.tingkat,
+                  pertanyaan: s.pertanyaan,
+                  ...(s.gambar ? { gambar: s.gambar } : {}),
+                  opsi: s.opsi,
+                  ...(s.kunci ? { kunci: s.kunci } : {}),
+                  pembahasan: s.pembahasan,
+                  paketId: activePaket.id,
+                });
+                router.refresh();
+              })
+            }
             onDeletePaket={() =>
               startTransition(async () => {
                 await deletePaketAction(activePaket.id);
@@ -389,6 +405,7 @@ function PaketDetail({
   onAddSoal,
   onEditSoal,
   onDeleteSoal,
+  onDuplicateSoal,
   onDeletePaket,
   onRename,
   onImported,
@@ -400,18 +417,25 @@ function PaketDetail({
   onAddSoal: () => void;
   onEditSoal: (id: string) => void;
   onDeleteSoal: (id: string) => void;
+  onDuplicateSoal: (s: Soal) => void;
   onDeletePaket: () => void;
   onRename: (nama: string, deskripsi: string, harga: number) => void;
   onImported: () => void;
 }) {
   const [filter, setFilter] = useState<"ALL" | Subtes>("ALL");
+  const [q, setQ] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editHead, setEditHead] = useState(false);
   const [nama, setNama] = useState(paket.nama);
   const [deskripsi, setDeskripsi] = useState(paket.deskripsi);
   const [harga, setHarga] = useState(String(paket.harga));
 
-  const list = soal.filter((s) => filter === "ALL" || s.subtes === filter);
+  const key = q.trim().toLowerCase();
+  const list = soal.filter(
+    (s) =>
+      (filter === "ALL" || s.subtes === filter) &&
+      (!key || `${teksPolos(s.pertanyaan)} ${s.materi}`.toLowerCase().includes(key)),
+  );
 
   return (
     <>
@@ -518,20 +542,36 @@ function PaketDetail({
         </button>
       </div>
 
-      {/* Filter */}
-      <div className="mt-6 flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1.5">
-        {(["ALL", ...SUBTES_ORDER] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => setFilter(k)}
-            className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-              filter === k ? "bg-navy text-white" : "text-slate hover:bg-muted"
-            }`}
-          >
-            {k === "ALL" ? "Semua" : k}
-          </button>
-        ))}
+      {/* Filter + cari */}
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1.5">
+          {(["ALL", ...SUBTES_ORDER] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setFilter(k)}
+              className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                filter === k ? "bg-navy text-white" : "text-slate hover:bg-muted"
+              }`}
+            >
+              {k === "ALL" ? "Semua" : k}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Cari soal (materi / kata kunci)…"
+          aria-label="Cari soal dalam paket"
+          className="h-10 w-full rounded-xl border border-line bg-surface px-3.5 text-sm text-heading outline-none placeholder:text-slate-400 focus:border-brand-600 sm:w-72"
+        />
       </div>
+
+      {q && (
+        <p className="mt-3 text-sm text-slate">
+          Menampilkan <span className="font-semibold text-heading">{list.length}</span> soal cocok
+        </p>
+      )}
 
       {/* Daftar soal */}
       <div className="mt-4 space-y-3">
@@ -548,15 +588,27 @@ function PaketDetail({
                 <Badge tone="navy">{s.subtes}</Badge>
                 <Badge tone="neutral">{s.materi}</Badge>
                 <Badge tone={s.tingkat === "HOTS" ? "gold" : "neutral"}>{s.tingkat}</Badge>
+                {s.subtes === "TKP" ? (
+                  <Badge tone="neutral">poin 1–5</Badge>
+                ) : s.kunci ? (
+                  <Badge tone="success">Kunci {s.kunci}</Badge>
+                ) : null}
               </div>
-              <p className="mt-2 line-clamp-2 text-sm text-heading">{s.pertanyaan}</p>
+              <p className="mt-2 line-clamp-2 text-sm text-heading">{teksPolos(s.pertanyaan)}</p>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
               <button
                 onClick={() => onEditSoal(s.id)}
                 className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-slate hover:bg-muted hover:text-heading"
               >
                 Edit
+              </button>
+              <button
+                onClick={() => onDuplicateSoal(s)}
+                disabled={pending}
+                className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-slate hover:bg-muted hover:text-heading disabled:opacity-50"
+              >
+                Duplikat
               </button>
               <button
                 onClick={() => { if (confirm("Hapus soal ini?")) onDeleteSoal(s.id); }}
