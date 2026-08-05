@@ -291,6 +291,9 @@ export function SimulasiRunner({
   }
 
   const cfg = SUBTES[soal.subtes];
+  // Opsi bergambar (mis. soal figural) ditata sebagai grid, bukan daftar bertumpuk,
+  // agar pilihan A–E tampil berdampingan dengan ukuran seragam seperti CAT asli.
+  const adaGambarOpsi = soal.opsi.some((o) => o.gambar);
 
   // Memilih opsi hanya menandai pilihan sementara — belum terkunci.
   const pilih = (optId: string) => setPending(optId);
@@ -409,9 +412,59 @@ export function SimulasiRunner({
                   />
                 )}
 
-                <div className="mt-4 space-y-1.5" role="radiogroup" aria-label="Pilihan jawaban">
+                <div
+                  className={`mt-4 ${adaGambarOpsi ? "grid grid-cols-2 gap-2.5 sm:grid-cols-3" : "space-y-1.5"}`}
+                  role="radiogroup"
+                  aria-label="Pilihan jawaban"
+                >
                   {soal.opsi.map((o) => {
                     const selected = pending === o.id;
+
+                    // ---- Opsi bergambar (figural): kartu grid, gambar seragam ----
+                    if (adaGambarOpsi) {
+                      return (
+                        <button
+                          key={o.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => pilih(o.id)}
+                          className={`flex flex-col gap-2 rounded-xl border p-2.5 transition-all duration-150 ${
+                            selected
+                              ? "border-brand-600 bg-brand-50 shadow-[0_0_0_1px_var(--color-brand-600)]"
+                              : "border-line bg-surface hover:border-line-strong hover:bg-muted/40"
+                          }`}
+                        >
+                          <span className="flex items-center justify-between">
+                            <span
+                              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold ${
+                                selected
+                                  ? "border-brand-600 bg-brand-600 text-white"
+                                  : "border-line-strong text-slate-400"
+                              }`}
+                            >
+                              {o.id}
+                            </span>
+                            {selected && <IconCheck width={16} height={16} className="shrink-0 text-brand-600" />}
+                          </span>
+                          {o.gambar && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={`/gambar/${o.gambar}`}
+                              alt={`Pilihan ${o.id}`}
+                              className="aspect-square w-full rounded-lg border border-line bg-white object-contain p-1"
+                            />
+                          )}
+                          {o.teks && (
+                            <span className="text-center text-sm leading-snug text-slate">
+                              <TeksInline text={o.teks} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    }
+
+                    // ---- Opsi teks: daftar seperti semula ----
                     return (
                       <button
                         key={o.id}
@@ -436,14 +489,6 @@ export function SimulasiRunner({
                         </span>
                         <span className="flex-1">
                           <TeksInline text={o.teks} />
-                          {o.gambar && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={`/gambar/${o.gambar}`}
-                              alt={`Pilihan ${o.id}`}
-                              className={`${o.teks ? "mt-2" : ""} max-h-40 w-auto max-w-full rounded-lg border border-line bg-white object-contain`}
-                            />
-                          )}
                         </span>
                         {selected && <IconCheck width={16} height={16} className="shrink-0 text-brand-600" />}
                       </button>
