@@ -13,6 +13,8 @@ export interface HasilPayload {
   perSubtes: HasilSubtes[];
   jumlahSoal: number;
   waktuTerpakaiDetik: number;
+  /** Snapshot lengkap (JSON HasilTersimpan) agar pembahasan bisa dibuka lagi di Riwayat. */
+  review?: string | null;
 }
 
 /**

@@ -95,8 +95,10 @@ export function SimulasiRunner({
     const terpakai = TRYOUT_DURASI_DETIK - sisa;
     const hasil = hitungHasil(soalList, answers, terpakai);
     const tersimpan: HasilTersimpan = { ...hasil, soal: soalList, paketId, paketNama };
+    // Snapshot lengkap untuk halaman Riwayat (soal + jawaban + pembahasan).
+    const review = JSON.stringify(tersimpan);
     try {
-      localStorage.setItem(HASIL_STORAGE_KEY, JSON.stringify(tersimpan));
+      localStorage.setItem(HASIL_STORAGE_KEY, review);
       localStorage.removeItem(storageKey); // progres selesai — bersihkan
     } catch {
       /* ignore */
@@ -112,6 +114,7 @@ export function SimulasiRunner({
         perSubtes: hasil.perSubtes,
         jumlahSoal: soalList.length,
         waktuTerpakaiDetik: terpakai,
+        review,
       });
     } catch {
       /* ignore */

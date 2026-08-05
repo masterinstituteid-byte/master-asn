@@ -22,6 +22,7 @@ export const config = {
     "/simulasi/:path*",
     "/dashboard/:path*",
     "/hasil/:path*",
+    "/riwayat/:path*",
     "/admin/:path*",
   ],
 };

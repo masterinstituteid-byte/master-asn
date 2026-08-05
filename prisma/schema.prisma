@@ -32,6 +32,7 @@ model HasilUjian {
   nilaiMaksTotal     Int
   lulusSemua         Boolean
   rincian            String // JSON: array HasilSubtes (nilai per subtes)
+  review             String? // JSON: snapshot HasilTersimpan (soal+jawaban+pembahasan) untuk riwayat; null = ujian lama
   jumlahSoal         Int
   waktuTerpakaiDetik Int
   createdAt          DateTime @default(now())

@@ -12,6 +12,7 @@ const NAV = [
   { href: "/bank-soal", label: "Bank Soal" },
   { href: "/tryout", label: "Simulasi" },
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/riwayat", label: "Riwayat" },
 ];
 
 export function Navbar() {

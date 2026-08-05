@@ -1,6 +1,12 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { SUBTES, SUBTES_ORDER, type HasilSubtes, type Subtes } from "@/lib/skd";
+import {
+  SUBTES,
+  SUBTES_ORDER,
+  type HasilSubtes,
+  type HasilTersimpan,
+  type Subtes,
+} from "@/lib/skd";
 
 export interface SimpanHasilInput {
   userId: string;
@@ -12,6 +18,8 @@ export interface SimpanHasilInput {
   perSubtes: HasilSubtes[];
   jumlahSoal: number;
   waktuTerpakaiDetik: number;
+  /** Snapshot HasilTersimpan (JSON) untuk membuka kembali pembahasan di halaman Riwayat. */
+  review?: string | null;
 }
 
 /** Simpan satu hasil ujian yang tertaut ke akun pengguna. */
@@ -25,6 +33,7 @@ export async function simpanHasil(input: SimpanHasilInput): Promise<void> {
       nilaiMaksTotal: input.nilaiMaksTotal,
       lulusSemua: input.lulusSemua,
       rincian: JSON.stringify(input.perSubtes),
+      review: input.review ?? null,
       jumlahSoal: input.jumlahSoal,
       waktuTerpakaiDetik: input.waktuTerpakaiDetik,
     },
@@ -90,6 +99,9 @@ export interface RiwayatItem {
   nilaiTotal: number;
   nilaiMaksTotal: number;
   lulusSemua: boolean;
+  jumlahSoal: number;
+  waktuTerpakaiDetik: number;
+  adaReview: boolean; // true bila pembahasan tersimpan (ujian sejak fitur riwayat aktif)
   createdAt: string;
 }
 
@@ -114,6 +126,77 @@ export interface StatistikUser {
   fokus: SubtesRata[];
 }
 
+type HasilRow = {
+  id: string;
+  paketId: string | null;
+  paketNama: string;
+  nilaiTotal: number;
+  nilaiMaksTotal: number;
+  lulusSemua: boolean;
+  jumlahSoal: number;
+  waktuTerpakaiDetik: number;
+  review: string | null;
+  createdAt: Date;
+};
+
+function toRiwayatItem(r: HasilRow): RiwayatItem {
+  return {
+    id: r.id,
+    paketId: r.paketId,
+    paketNama: r.paketNama,
+    nilaiTotal: r.nilaiTotal,
+    nilaiMaksTotal: r.nilaiMaksTotal,
+    lulusSemua: r.lulusSemua,
+    jumlahSoal: r.jumlahSoal,
+    waktuTerpakaiDetik: r.waktuTerpakaiDetik,
+    adaReview: !!r.review,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+/** Daftar riwayat simulasi milik satu pengguna (terbaru dulu). */
+export async function getRiwayatUser(userId: string): Promise<RiwayatItem[]> {
+  const rows = await prisma.hasilUjian.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+  return rows.map(toRiwayatItem);
+}
+
+export interface HasilReview {
+  id: string;
+  paketNama: string;
+  createdAt: string;
+  /** Snapshot lengkap untuk pembahasan; null bila ujian dibuat sebelum fitur riwayat. */
+  snapshot: HasilTersimpan | null;
+}
+
+/**
+ * Ambil satu hasil untuk halaman detail riwayat — HANYA bila milik pengguna itu
+ * sendiri (cegah akses hasil peserta lain lewat menebak id).
+ */
+export async function getHasilReview(
+  id: string,
+  userId: string,
+): Promise<HasilReview | null> {
+  const r = await prisma.hasilUjian.findUnique({ where: { id } });
+  if (!r || r.userId !== userId) return null;
+  let snapshot: HasilTersimpan | null = null;
+  if (r.review) {
+    try {
+      snapshot = JSON.parse(r.review) as HasilTersimpan;
+    } catch {
+      snapshot = null;
+    }
+  }
+  return {
+    id: r.id,
+    paketNama: r.paketNama,
+    createdAt: r.createdAt.toISOString(),
+    snapshot,
+  };
+}
+
 const NILAI_MAKS_TOTAL = SUBTES_ORDER.reduce((a, k) => a + SUBTES[k].nilaiMaks, 0);
 
 export async function getStatistikUser(userId: string): Promise<StatistikUser> {
@@ -122,15 +205,7 @@ export async function getStatistikUser(userId: string): Promise<StatistikUser> {
     orderBy: { createdAt: "asc" },
   });
 
-  const riwayat: RiwayatItem[] = rows.map((r) => ({
-    id: r.id,
-    paketId: r.paketId,
-    paketNama: r.paketNama,
-    nilaiTotal: r.nilaiTotal,
-    nilaiMaksTotal: r.nilaiMaksTotal,
-    lulusSemua: r.lulusSemua,
-    createdAt: r.createdAt.toISOString(),
-  }));
+  const riwayat: RiwayatItem[] = rows.map(toRiwayatItem);
 
   const total = rows.length;
   const nilaiTertinggi = rows.reduce((m, r) => Math.max(m, r.nilaiTotal), 0);
