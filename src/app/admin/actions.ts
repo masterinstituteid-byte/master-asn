@@ -91,6 +91,7 @@ export async function updatePaketAction(
     nama?: string;
     deskripsi?: string;
     aktif?: boolean;
+    terkunci?: boolean;
     harga?: number;
     tampilLanding?: boolean;
     populer?: boolean;

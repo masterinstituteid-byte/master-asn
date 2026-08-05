@@ -44,6 +44,7 @@ model Paket {
   deskripsi     String       @default("")
   harga         Int          @default(0) // rupiah; 0 = gratis
   aktif         Boolean      @default(true)
+  terkunci      Boolean      @default(false) // paket GRATIS (bimbel): true = peserta tak bisa mulai sampai admin buka. Diabaikan untuk paket berbayar.
   tampilLanding Boolean      @default(true) // tampil di daftar harga landing
   populer       Boolean      @default(false) // badge "Paling populer"
   urutan        Int          @default(0)

@@ -51,6 +51,8 @@ export default async function TryoutPage() {
 
   const kartu: PaketKartu[] = paketList.map((p) => {
     const bisaAkses = admin || p.harga <= 0 || aksesSet.has(p.id);
+    // Kunci hanya berlaku untuk paket gratis (bimbel); admin selalu bisa mulai (untuk menguji).
+    const terkunci = p.harga === 0 && p.terkunci && !admin;
     return {
       id: p.id,
       nama: p.nama,
@@ -59,6 +61,7 @@ export default async function TryoutPage() {
       jumlah: p.jumlah,
       total: p.total,
       bisaAkses,
+      terkunci,
       menunggu: !bisaAkses && pendingSet.has(p.id),
     };
   });

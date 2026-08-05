@@ -92,17 +92,18 @@ export async function countSoal(): Promise<number> {
  */
 export async function resolvePaketAktif(
   paketId?: string,
-): Promise<{ id: string | null; nama: string; harga: number }> {
+): Promise<{ id: string | null; nama: string; harga: number; terkunci: boolean }> {
   if (paketId) {
     const p = await prisma.paket.findUnique({ where: { id: paketId } });
-    if (p) return { id: p.id, nama: p.nama, harga: p.harga };
+    if (p) return { id: p.id, nama: p.nama, harga: p.harga, terkunci: p.terkunci };
   }
   const pertama = await prisma.paket.findFirst({
     where: { aktif: true },
     orderBy: [{ urutan: "asc" }, { createdAt: "asc" }],
   });
-  if (pertama) return { id: pertama.id, nama: pertama.nama, harga: pertama.harga };
-  return { id: null, nama: "Semua Soal", harga: 0 };
+  if (pertama)
+    return { id: pertama.id, nama: pertama.nama, harga: pertama.harga, terkunci: pertama.terkunci };
+  return { id: null, nama: "Semua Soal", harga: 0, terkunci: false };
 }
 
 /**

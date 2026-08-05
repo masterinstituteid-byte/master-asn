@@ -8,6 +8,8 @@ export interface PaketRingkas {
   deskripsi: string;
   harga: number;
   aktif: boolean;
+  /** Paket gratis (bimbel) yang dikunci — peserta tak bisa mulai sampai admin membuka. */
+  terkunci: boolean;
   tampilLanding: boolean;
   populer: boolean;
   urutan: number;
@@ -45,6 +47,7 @@ export async function getAllPaket(): Promise<PaketRingkas[]> {
       deskripsi: p.deskripsi,
       harga: p.harga,
       aktif: p.aktif,
+      terkunci: p.terkunci,
       tampilLanding: p.tampilLanding,
       populer: p.populer,
       urutan: p.urutan,
@@ -83,6 +86,7 @@ export async function updatePaket(
     nama?: string;
     deskripsi?: string;
     aktif?: boolean;
+    terkunci?: boolean;
     harga?: number;
     tampilLanding?: boolean;
     populer?: boolean;
@@ -94,6 +98,7 @@ export async function updatePaket(
       ...(data.nama !== undefined ? { nama: data.nama.trim() || "Paket Tanpa Nama" } : {}),
       ...(data.deskripsi !== undefined ? { deskripsi: data.deskripsi.trim() } : {}),
       ...(data.aktif !== undefined ? { aktif: data.aktif } : {}),
+      ...(data.terkunci !== undefined ? { terkunci: data.terkunci } : {}),
       ...(data.harga !== undefined ? { harga: Math.max(0, Math.round(data.harga)) } : {}),
       ...(data.tampilLanding !== undefined ? { tampilLanding: data.tampilLanding } : {}),
       ...(data.populer !== undefined ? { populer: data.populer } : {}),

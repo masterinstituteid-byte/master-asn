@@ -19,6 +19,8 @@ import {
   IconStar,
   IconQuote,
   IconEye,
+  IconLock,
+  IconLockOpen,
 } from "@/components/icons";
 import { Button, Badge } from "@/components/ui";
 import {
@@ -249,6 +251,12 @@ export function AdminPanel({
                 router.refresh();
               })
             }
+            onToggleLock={(terkunci) =>
+              startTransition(async () => {
+                await updatePaketAction(activePaket.id, { terkunci });
+                router.refresh();
+              })
+            }
             onImported={() => router.refresh()}
           />
         )}
@@ -371,7 +379,7 @@ function PaketList({
                 {p.total}/{SKD_TOTAL_SOAL} soal
               </span>
             </div>
-            <p className="mt-3 flex items-center gap-2 font-bold text-heading">
+            <p className="mt-3 flex flex-wrap items-center gap-2 font-bold text-heading">
               {p.nama}
               <span
                 className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${
@@ -380,6 +388,11 @@ function PaketList({
               >
                 {formatRupiah(p.harga)}
               </span>
+              {p.harga === 0 && p.terkunci && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-danger-50 px-1.5 py-0.5 text-xs font-semibold text-danger">
+                  <IconLock width={11} height={11} /> Terkunci
+                </span>
+              )}
             </p>
             {p.deskripsi && <p className="mt-0.5 line-clamp-1 text-sm text-slate">{p.deskripsi}</p>}
             <div className="mt-4 flex flex-wrap gap-2">
@@ -408,6 +421,7 @@ function PaketDetail({
   onDuplicateSoal,
   onDeletePaket,
   onRename,
+  onToggleLock,
   onImported,
 }: {
   paket: PaketRingkas;
@@ -420,6 +434,7 @@ function PaketDetail({
   onDuplicateSoal: (s: Soal) => void;
   onDeletePaket: () => void;
   onRename: (nama: string, deskripsi: string, harga: number) => void;
+  onToggleLock: (terkunci: boolean) => void;
   onImported: () => void;
 }) {
   const [filter, setFilter] = useState<"ALL" | Subtes>("ALL");
@@ -496,28 +511,70 @@ function PaketDetail({
             </div>
           </div>
         ) : (
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-extrabold tracking-tight text-heading">{paket.nama}</h1>
-              <span
-                className={`rounded-md px-2 py-0.5 text-sm font-semibold ${
-                  paket.harga > 0 ? "bg-gold-100 text-gold-700" : "bg-success-50 text-success"
-                }`}
-              >
-                {formatRupiah(paket.harga)}
-              </span>
-              <button onClick={() => setEditHead(true)} className="text-sm font-medium text-brand-600 hover:underline">
-                ubah
-              </button>
+          <>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-extrabold tracking-tight text-heading">{paket.nama}</h1>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-sm font-semibold ${
+                    paket.harga > 0 ? "bg-gold-100 text-gold-700" : "bg-success-50 text-success"
+                  }`}
+                >
+                  {formatRupiah(paket.harga)}
+                </span>
+                {paket.harga === 0 && paket.terkunci && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-danger-50 px-2 py-0.5 text-xs font-semibold text-danger">
+                    <IconLock width={12} height={12} /> Terkunci
+                  </span>
+                )}
+                <button onClick={() => setEditHead(true)} className="text-sm font-medium text-brand-600 hover:underline">
+                  ubah
+                </button>
+              </div>
+              <p className="mt-1 text-sm text-slate">
+                {paket.deskripsi || "Tanpa deskripsi."}{" "}
+                <span className="font-semibold text-heading">
+                  {paket.total}/{SKD_TOTAL_SOAL} soal
+                </span>{" "}
+                — {SUBTES_ORDER.map((k) => `${k} ${paket.jumlah[k]}/${SUBTES[k].jumlahSoal}`).join(" · ")}
+              </p>
             </div>
-            <p className="mt-1 text-sm text-slate">
-              {paket.deskripsi || "Tanpa deskripsi."}{" "}
-              <span className="font-semibold text-heading">
-                {paket.total}/{SKD_TOTAL_SOAL} soal
-              </span>{" "}
-              — {SUBTES_ORDER.map((k) => `${k} ${paket.jumlah[k]}/${SUBTES[k].jumlahSoal}`).join(" · ")}
-            </p>
-          </div>
+
+            {/* Kontrol Buka/Kunci — hanya untuk paket GRATIS (bimbel).
+                Paket berbayar tidak memakai kunci (akses via pembelian) agar tak mengganggu pembeli. */}
+            {paket.harga === 0 ? (
+              <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                <button
+                  onClick={() => onToggleLock(!paket.terkunci)}
+                  disabled={pending}
+                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${
+                    paket.terkunci
+                      ? "bg-success text-white hover:brightness-110"
+                      : "bg-danger-50 text-danger hover:brightness-95"
+                  }`}
+                >
+                  {paket.terkunci ? (
+                    <>
+                      <IconLockOpen width={16} height={16} /> Buka paket
+                    </>
+                  ) : (
+                    <>
+                      <IconLock width={16} height={16} /> Kunci paket
+                    </>
+                  )}
+                </button>
+                <p className="max-w-[15rem] text-xs text-slate-400 sm:text-right">
+                  {paket.terkunci
+                    ? "Peserta belum bisa mengerjakan. Buka saat sesi kelas dimulai."
+                    : "Peserta bisa langsung mengerjakan. Kunci untuk kontrol sesi bimbel."}
+                </p>
+              </div>
+            ) : (
+              <p className="max-w-[15rem] text-xs text-slate-400 sm:text-right">
+                Paket dijual — akses terbuka otomatis setelah peserta membeli. Tidak memakai kunci sesi.
+              </p>
+            )}
+          </>
         )}
       </div>
 

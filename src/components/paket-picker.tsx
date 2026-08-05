@@ -18,6 +18,8 @@ export interface PaketKartu {
   total: number;
   /** true = boleh langsung mengerjakan (gratis / sudah bayar / admin). */
   bisaAkses: boolean;
+  /** true = paket gratis (bimbel) yang sedang dikunci pengajar — belum bisa dimulai. */
+  terkunci?: boolean;
   /** true = ada pembayaran menunggu konfirmasi. */
   menunggu: boolean;
 }
@@ -59,7 +61,15 @@ export function PaketPicker({
             ))}
           </div>
 
-          {p.bisaAkses ? (
+          {p.terkunci ? (
+            <div className="mt-5 flex w-full flex-col items-center gap-1 rounded-xl border border-line bg-muted/50 px-4 py-2.5 text-center">
+              <span className="flex items-center gap-2 text-sm font-semibold text-slate">
+                <IconLock width={16} height={16} />
+                Menunggu dibuka pengajar
+              </span>
+              <span className="text-xs text-slate-400">Paket akan aktif saat sesi kelas dimulai.</span>
+            </div>
+          ) : p.bisaAkses ? (
             <ButtonLink href={`/simulasi?paket=${p.id}`} size="md" className="mt-5 w-full">
               <IconPlay width={16} height={16} />
               Mulai

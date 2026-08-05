@@ -18,13 +18,17 @@ export default async function SimulasiPage({
   const { paket } = await searchParams;
   const meta = await resolvePaketAktif(paket);
 
-  // Paket berbayar hanya boleh dikerjakan bila sudah punya akses (atau admin).
-  if (meta.id && meta.harga > 0) {
+  if (meta.id) {
     const session = await currentSession();
     const admin = isAdminEmail(session?.email);
-    const boleh =
-      admin || (session ? await punyaAkses(session.sub, meta.id) : false);
-    if (!boleh) redirect("/tryout");
+    if (meta.harga > 0) {
+      // Paket berbayar: hanya boleh dikerjakan bila sudah punya akses (atau admin).
+      const boleh = admin || (session ? await punyaAkses(session.sub, meta.id) : false);
+      if (!boleh) redirect("/tryout");
+    } else if (meta.terkunci && !admin) {
+      // Paket gratis (bimbel) yang sedang dikunci — tunggu admin membukanya.
+      redirect("/tryout");
+    }
   }
 
   const soal = await getPaketSimulasi(meta.id ?? undefined);
