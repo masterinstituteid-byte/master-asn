@@ -440,6 +440,7 @@ function PaketDetail({
   const [filter, setFilter] = useState<"ALL" | Subtes>("ALL");
   const [q, setQ] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [previewSoal, setPreviewSoal] = useState<Soal | null>(null);
   const [editHead, setEditHead] = useState(false);
   const [nama, setNama] = useState(paket.nama);
   const [deskripsi, setDeskripsi] = useState(paket.deskripsi);
@@ -661,6 +662,13 @@ function PaketDetail({
                 Edit
               </button>
               <button
+                onClick={() => setPreviewSoal(s)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-slate hover:bg-muted hover:text-heading"
+              >
+                <IconEye width={15} height={15} />
+                Pratinjau
+              </button>
+              <button
                 onClick={() => onDuplicateSoal(s)}
                 disabled={pending}
                 className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-slate hover:bg-muted hover:text-heading disabled:opacity-50"
@@ -694,6 +702,39 @@ function PaketDetail({
           onClose={() => setUploadOpen(false)}
           onImported={() => { setUploadOpen(false); onImported(); }}
         />
+      )}
+
+      {previewSoal && (
+        <div className="fixed inset-0 z-[70] grid place-items-center p-4">
+          <div
+            className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
+            onClick={() => setPreviewSoal(null)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pratinjau soal"
+            className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-line bg-bg p-5 shadow-[var(--shadow-lift)] sm:p-6"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-heading">
+                <IconEye width={18} height={18} /> Pratinjau Soal
+              </h2>
+              <button
+                onClick={() => setPreviewSoal(null)}
+                className="grid h-9 w-9 place-items-center rounded-lg bg-muted text-heading hover:brightness-95"
+                aria-label="Tutup pratinjau"
+              >
+                <IconClose width={18} height={18} />
+              </button>
+            </div>
+            <p className="mb-3 text-xs text-slate-400">
+              Tampilan seperti yang dilihat peserta saat simulasi.
+            </p>
+            <SoalPreview form={formFromSoal(previewSoal)} />
+          </div>
+        </div>
       )}
     </>
   );
